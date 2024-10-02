@@ -102,6 +102,41 @@ namespace Yubico.YubiKey
         }
 
         /// <summary>
+        /// Enumerate YubiKeys that are HID devices by directly querying the system.
+        /// </summary>
+        /// <returns>
+        /// A collection of YubiKeys that were found, as <see cref="IYubiKeyDevice"/>s.
+        /// </returns>
+        /// <exception cref="UnauthorizedAccessException">
+        /// Thrown when attempting to find YubiKeys for the transport
+        /// <c>HidFido</c> on Windows, and the application is not running in an
+        /// elevated state (e.g. "Run as administrator").
+        /// </exception>
+        public static IEnumerable<IYubiKeyDevice> FindHidDevices()
+        {
+            Logger log = Log.GetLogger();
+
+            log.LogInformation("FindHidDevices");
+
+            // If the caller is looking only for HidFido, and this is Windows,
+            // and the process is not running elevated, we can't use the YubiKey,
+            // so throw an exception.
+            if (SdkPlatformInfo.OperatingSystem == SdkPlatform.Windows &&
+                !SdkPlatformInfo.IsElevated)
+            {
+                throw new UnauthorizedAccessException(
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        ExceptionMessages.HidFidoWindowsNotElevated));
+            }
+
+            // Returns any values that the device finder returns in real time
+            return YubiKeyHidDeviceFinder
+                .Instance
+                .GetAll();
+        }
+
+        /// <summary>
         /// Get info on a specific YubiKey by serial number.
         /// </summary>
         /// <remarks>
