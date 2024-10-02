@@ -17,7 +17,7 @@ limitations under the License. -->
   <PropertyGroup>
 
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
-    <PackageId>Yubico.DotNetPolyfills</PackageId>
+    <PackageId>Yubico.DotNetPolyfills.Intercede</PackageId>
     <VersionPrefix>$(YubicoDotNetPolyfillsVersion)</VersionPrefix>
 
     <!-- TODO: Adjust in .editorconfig -->
@@ -41,6 +41,9 @@ limitations under the License. -->
     <!-- StrongName signing -->
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\Yubico.NET.SDK.snk</AssemblyOriginatorKeyFile>
+    <Title>Yubico.DotNetPolyfills (Intercede)</Title>
+    <Authors>Yubico AB, Intercede</Authors>
+    <Company>Yubico AB, Intercede</Company>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
@@ -54,7 +57,7 @@ limitations under the License. -->
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

@@ -21,7 +21,7 @@ limitations under the License. -->
     As of 2020, netstandard2.0 allows us to reach the widest audience while providing a large
     enough set of the .NET library to be productive.
     -->
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net47</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
 
     <RootNamespace></RootNamespace>
 
@@ -51,6 +51,10 @@ limitations under the License. -->
     <!-- StrongName signing -->
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\Yubico.NET.SDK.snk</AssemblyOriginatorKeyFile>
+    <PackageId>$(AssemblyName).Intercede</PackageId>
+    <Title>$(AssemblyName) (Intercede)</Title>
+    <Authors>Yubico AB, Intercede</Authors>
+    <Company>Yubico AB, Intercede</Company>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
