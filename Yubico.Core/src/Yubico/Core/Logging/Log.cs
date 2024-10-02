@@ -12,36 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma warning disable IDE0008 // Use explicit type
+#pragma warning disable IDE0011 // Add braces
+#pragma warning disable IDE0044 // Add readonly modifier
+#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1810 // Initialize reference type static fields inline
+
+using System.Collections.Generic;
+using System.Text;
+using System;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.IO;
+using System.Net.WebSockets;
 
 namespace Yubico.Core.Logging
 {
     /// <summary>
     /// A static class for managing Yubico SDK logging for this process.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This class is used for managing the active logger used globally by .NET-based Yubico SDKs in the current process.
-    /// Changing the settings in this class will not have any effect on applications or services that are not running
-    /// within the current application's process. It will affect all libraries contained within - for example, changing
-    /// the logger factory here will impact both the Yubico.YubiKey and Yubico.Core libraries.
-    /// </para>
-    /// <para>
-    /// The <see cref="LoggerFactory"/> property is used to set and control the concrete log to be used by the SDK. By
-    /// default, we send logs to the "null" logger - effectively disabling logging. If you set this property with your
-    /// own logger factory, the SDK will use this log from the point of the set until someone calls this set method again.
-    /// </para>
-    /// <para>
-    /// <see cref="GetLogger"/> should be used to return an instance of the <see cref="Logger"/> class. This is the object
-    /// used to actually write the log messages. It is generally OK to cache an instance of a logger within another
-    /// class instance. Holding a Logger instance open longer than that is not recommended, as changes to the LoggerFactory
-    /// will not be reflected until you call the `GetLogger` method again.
-    /// </para>
-    /// </remarks>
     public static class Log
     {
         private static ILoggerFactory? _factory;
+
+        private static Dictionary<string, Logfile> _logs;
+        private static readonly object _lock;
+        private static string _loggingFolder;
+        private static bool _loggingEnabled;
+
+        static Log()
+        {
+            _logs = new Dictionary<string, Logfile>();
+            _lock = new object();
+            _loggingFolder = "";
+            _loggingEnabled = false;
+
+            GetProcessSettings();
+        }
 
         /// <summary>
         /// The logger factory implementation that should be used by the SDK. Use this to set the active logger.
@@ -127,35 +134,84 @@ namespace Yubico.Core.Logging
         }
 
         /// <summary>
-        /// Gets an instance of the active logger.
+        /// Gets an instance of the active logger, bypassing the factory
         /// </summary>
-        /// <returns>
-        /// An instance of the active concrete logger.
-        /// </returns>
-        /// <example>
-        /// <para>
-        /// Write some information to the log.
-        /// </para>
-        /// <code language="csharp">
-        /// using Yubico.Core.Logging;
-        ///
-        /// public class Example
-        /// {
-        ///     private Logger _log = Log.GetLogger();
-        ///
-        ///     public void SampleMethod()
-        ///     {
-        ///         _log.LogDebug("The SampleMethod method has been called!");
-        ///     }
-        ///
-        ///     public void StaticMethod()
-        ///     {
-        ///         Logger log = Log.GetLogger(); // Can't use the instance logger because we're static.
-        ///         log.LogDebug("Called from a static method!");
-        ///     }
-        /// }
-        /// </code>
-        /// </example>
-        public static Logger GetLogger() => new Logger(LoggerFactory.CreateLogger("Yubico.Core logger"));
+        public static Logger GetLogger()
+        {   
+            //Return a logger working in two different ways, depending on whether a LoggerFactory has been set
+            if (!(_factory == null || _factory is NullLoggerFactory))
+            {
+                return new Logger(LoggerFactory.CreateLogger("Yubico.Core logger"));
+            }
+            return new Logger("WDAYubiKey-{0}");
+        }
+
+        /// <summary>
+        /// Gets an instance of the underlying logfile object
+        /// </summary>
+        public static Logfile GetLogFile(string name, bool overwrite)
+        {
+            // Ensure the logs collection and log file is created once
+            lock (_lock)
+            {
+                // First time we are getting a logfile
+                if (_logs.Count == 0)
+                {
+                    // In .net core, we need to register the additional code pages we use here
+                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                }
+
+                // If logfile with this product name and unformatted filename is not found, then create it and add it to the collection of logs
+                if (!_logs.TryGetValue(name, out var logfile))
+                {
+                    // If we havent managed to get a valid value, create a blank non-logging logfile object instead
+                    if (string.IsNullOrEmpty(_loggingFolder))
+                    {
+                        logfile = new Logfile();
+                    }
+                    else
+                    {
+                        // Determine the logfile name
+                        // Format e.g. AuthlogicsAuthenticationServerManager-{0}.log
+                        var now = DateTime.Now;
+                        var logFileNameOutput = $"{name}-{now.Year}{now.Month}{now.Day}{now.Hour}{now.Minute}{now.Second}";
+
+                        logfile = new Logfile(logFileNameOutput, _loggingFolder, _loggingEnabled, overwrite)
+                        {
+                            SafeLog = true
+                        };
+                    }
+
+                    // Write out the version so we know what version of the Authlogics.dll we have on the system
+                    logfile.AddVersion();
+
+                    _logs.Add(name, logfile);
+                }
+
+                return logfile;
+            }
+        }
+
+        private static void GetProcessSettings()
+        {
+            var path = "SOFTWARE\\Authlogics\\Windows Desktop Agent\\";
+            var registry = new Registry(path);
+
+            try
+            {
+                var folder = registry.GetValue("LoggingFolder", RegistryValueKind.String).ToString();
+                if (!string.IsNullOrEmpty(folder)) _loggingFolder = folder;
+
+                var value = registry.GetValue("LoggingEnabled", RegistryValueKind.DWord, false);
+                if (value.ToString() == "1")
+                {
+                    _loggingEnabled = true;
+                }
+            }
+            catch (Exception)
+            {
+                //Cant log anything here as we are in the logging class
+            }
+        }
     }
 }

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma warning disable IDE0011 // Add braces
+
 using System;
 using Microsoft.Extensions.Logging;
 
@@ -36,9 +38,10 @@ namespace Yubico.Core.Logging
     /// formatting the error and calling one of the existing log methods.
     /// </para>
     /// </remarks>
-    public sealed class Logger : ILogger
+    public class Logger : ILogger
     {
-        private readonly ILogger _logger;
+        private readonly ILogger? _logger;
+        private readonly Logfile? _log;
 
         /// <summary>
         /// Constructs a new instance of the <see cref="Logger"/> class.
@@ -50,6 +53,11 @@ namespace Yubico.Core.Logging
         internal Logger(ILogger logger)
         {
             _logger = logger;
+        }
+
+        internal Logger(string name)
+        {
+            _log = Logging.Log.GetLogFile(name, false);
         }
 
         /// <summary>
@@ -90,8 +98,14 @@ namespace Yubico.Core.Logging
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            _logger.Log(logLevel, eventId, state, exception, formatter);
+            Func<TState, Exception?, string> formatter)
+            {
+                if (_logger != null) _logger.Log(logLevel, eventId, state, exception, formatter);
+                if (!IsEnabled(logLevel)) return;
+
+                if (formatter is null) throw new ArgumentNullException(nameof(formatter));
+                if (_log !=null) _log.AddText($"{formatter(state, exception)}");
+        }
 
         /// <summary>
         /// Checks whether the given `logLevel` has been enabled by the log provider.
@@ -108,7 +122,13 @@ namespace Yubico.Core.Logging
         /// log provider ready to consume it. You can use this method to first test to see if this log level is enabled
         /// before running the extra diagnostics code.
         /// </remarks>
-        public bool IsEnabled(LogLevel logLevel) => _logger.IsEnabled(logLevel);
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            if (_logger != null) return _logger.IsEnabled(logLevel);
+            if (_log != null) return _log.Enabled;
+
+            return false;
+        }
 
         /// <summary>
         /// Begins a logical operation scope to group log messages together.
@@ -122,6 +142,10 @@ namespace Yubico.Core.Logging
         /// <returns>
         /// A disposable object that ends the logical operation scope on dispose.
         /// </returns>
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => _logger.BeginScope(state);
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        {
+            if (_logger != null) return _logger.BeginScope(state);
+            return default!;
+        }
     }
 }
