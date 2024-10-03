@@ -16,6 +16,7 @@
 #pragma warning disable IDE0011 // Add braces
 #pragma warning disable IDE0044 // Add readonly modifier
 #pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1305 // Specify IFormatProvider
 #pragma warning disable CA1810 // Initialize reference type static fields inline
 
 using System.Collections.Generic;
@@ -173,8 +174,9 @@ namespace Yubico.Core.Logging
                     {
                         // Determine the logfile name
                         // Format e.g. AuthlogicsAuthenticationServerManager-{0}.log
+                        //Name should contain the location for the date string in parameter 0 ie {0}
                         var now = DateTime.Now;
-                        var logFileNameOutput = $"{name}-{now.Year}{now.Month}{now.Day}{now.Hour}{now.Minute}{now.Second}";
+                        var logFileNameOutput = string.Format(name, $"{now.Year}{now.Month}{now.Day}{now.Hour}{now.Minute}{now.Second}";
 
                         logfile = new Logfile(logFileNameOutput, _loggingFolder, _loggingEnabled, overwrite)
                         {
