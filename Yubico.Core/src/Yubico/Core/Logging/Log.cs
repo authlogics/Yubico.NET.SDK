@@ -176,7 +176,7 @@ namespace Yubico.Core.Logging
                         // Format e.g. AuthlogicsAuthenticationServerManager-{0}.log
                         //Name should contain the location for the date string in parameter 0 ie {0}
                         var now = DateTime.Now;
-                        var logFileNameOutput = string.Format(name, $"{now.Year}{now.Month}{now.Day}{now.Hour}{now.Minute}{now.Second}";
+                        var logFileNameOutput = string.Format(name, $"{now.Year}{now.Month}{now.Day}{now.Hour}{now.Minute}{now.Second}");
 
                         logfile = new Logfile(logFileNameOutput, _loggingFolder, _loggingEnabled, overwrite)
                         {
