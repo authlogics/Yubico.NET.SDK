@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 using Yubico.Core.Devices;
 using Yubico.Core.Devices.Hid;
 using Yubico.Core.Devices.SmartCard;
@@ -26,6 +27,11 @@ namespace Yubico.YubiKey
         /// An instance of a <see cref="YubiKeyHidDeviceFinder"/>.
         /// </summary>
         public static YubiKeyHidDeviceFinder Instance => _lazyInstance.Value;
+
+        /// <summary>
+        /// An instance of a <see cref="YubiKeyHidDeviceFinderOptions"/>.
+        /// </summary>
+        public static YubiKeyHidDeviceFinderOptions Options { get; } = new YubiKeyHidDeviceFinderOptions();
 
         private static readonly Lazy<YubiKeyHidDeviceFinder> _lazyInstance = new Lazy<YubiKeyHidDeviceFinder>(() => new YubiKeyHidDeviceFinder());
 
@@ -58,7 +64,10 @@ namespace Yubico.YubiKey
             return _internalCache.Keys.ToList();
         }
 
-        private void Update()
+        /// <summary>
+        /// Update the devices collection by detecting all available devices on the configured transports
+        /// </summary>
+        public void Update()
         {
             ResetCacheMarkers();
 
@@ -139,21 +148,30 @@ namespace Yubico.YubiKey
         {
             var devicesToProcess = new List<IDevice>();
 
-            IList<IDevice> hidFidoDevices = new List<IDevice>();
-
-            if (SdkPlatformInfo.OperatingSystem == SdkPlatform.Windows && !SdkPlatformInfo.IsElevated)
+            if (Options.AllowedTransports.HasFlag(Transport.HidFido))
             {
-                _log.LogWarning("SDK running in an un-elevated Windows process. Skipping FIDO enumeration as this requires process elevation.");
+                if (SdkPlatformInfo.OperatingSystem == SdkPlatform.Windows && !SdkPlatformInfo.IsElevated)
+                {
+                    _log.LogWarning("SDK running in an un-elevated Windows process. Skipping FIDO enumeration as this requires process elevation.");
+                }
+                else
+                {
+                    IEnumerable<IDevice> hidFidoDevices = GetHidFidoDevices(); ;
+                    
+                    _log.LogInformation("Found {FidoCount} HID FIDO devices for processing.", hidFidoDevices.Count());
+                    devicesToProcess.AddRange(hidFidoDevices);
+                }
             }
-            else
+
+            if (Options.AllowedTransports.HasFlag(Transport.SmartCard))
             {
-                hidFidoDevices = GetHidFidoDevices().ToList();
+                IEnumerable<IDevice> smartCardDevices = GetSmartCardDevices();
+
+                _log.LogInformation("Found {SmartCardCount} Smart Card devices for processing.", smartCardDevices.Count());
+                devicesToProcess.AddRange(smartCardDevices);
             }
-
-            _log.LogInformation("Found {FidoCount} HID FIDO devices for processing.", hidFidoDevices.Count);
-
-            devicesToProcess.AddRange(hidFidoDevices);
-
+                
+            _log.LogInformation("Returning {DeviceCount} devices to process.", devicesToProcess.Count);
             return devicesToProcess;
         }
 
@@ -217,6 +235,18 @@ namespace Yubico.YubiKey
                     .Where(d => d.IsFido());
             }
             catch (PlatformInterop.PlatformApiException e) { ErrorHandler(e); }
+
+            return Enumerable.Empty<IDevice>();
+        }
+
+        private static IEnumerable<IDevice> GetSmartCardDevices()
+        {
+            try
+            {
+                return SmartCardDevice
+                    .GetSmartCardDevices();
+            }
+            catch (PlatformInterop.SCardException e) { ErrorHandler(e); }
 
             return Enumerable.Empty<IDevice>();
         }

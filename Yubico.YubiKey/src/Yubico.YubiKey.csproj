@@ -61,6 +61,13 @@ limitations under the License. -->
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
+    <EnforceCodeStyleInBuild>False</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>False</EnableNETAnalyzers>
+  </PropertyGroup>
+
   <PropertyGroup Label="DocFX settings" Condition="$(Configuration.Contains('WithDocs')) and $(TargetFramework)=='netstandard2.0'">
     <LogFile>..\docs\log.txt</LogFile>
     <LogLevel>Warning</LogLevel>
@@ -110,6 +117,7 @@ limitations under the License. -->
     <None Include="..\..\Yubico.NET.SDK.snk">
       <Link>Yubico.NET.SDK.snk</Link>
     </None>
+    <None Include="D:\Authlogics Source\Yubico.NET.SDK\Yubico.YubiKey\src\.editorconfig" />
   </ItemGroup>
 
   <ItemGroup Label="Package references specific to Yubico.YubiKey.dll">
@@ -182,5 +190,8 @@ limitations under the License. -->
     </ItemGroup>
     <Copy SourceFiles="@(MemberpageContentFiles)" DestinationFolder="$(ProjectDir)..\docs\memberpage\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
+  <ItemGroup>
+    <EditorConfigFiles Remove="D:\Authlogics Source\Yubico.NET.SDK\Yubico.YubiKey\src\.editorconfig" />
+  </ItemGroup>
 
 </Project>

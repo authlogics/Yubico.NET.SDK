@@ -8,6 +8,8 @@
 #pragma warning disable CA1305 // Specify IFormatProvider
 #pragma warning disable CA1307 // Specify StringComparison
 #pragma warning disable CA1310 // Specify StringComparison for correctness
+#pragma warning disable CA1311 // Avoid duplicate method signatures
+#pragma warning disable CA1866 // Use MethodImplOptions.AggressiveInlining
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
