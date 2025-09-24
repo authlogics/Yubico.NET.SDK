@@ -23,7 +23,8 @@ namespace Yubico.YubiKey.DeviceExtensions
         public static bool IsKeyboard(this IHidDevice device) => device.UsagePage == HidUsagePage.Keyboard;
 
         public static bool IsYubicoDevice(this IHidDevice device) =>
-            device.VendorId == VendorIdentifiers.Yubico
-            && ProductIdentifiers.AllYubiKeys.Contains(device.ProductId);
+            (device.VendorId == VendorIdentifiers.Yubico
+            && ProductIdentifiers.AllYubiKeys.Contains(device.ProductId))
+            || VendorIdentifiers.AllVendors.Contains(device.VendorId);
     }
 }

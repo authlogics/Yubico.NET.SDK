@@ -12,10 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
+
 namespace Yubico.YubiKey
 {
     internal class VendorIdentifiers
     {
-        public static short Yubico => 0x1050;
+
+        public const short Yubico = 0x1050;
+        public const short Swissbit = 0x1370;
+        public const short Onespan = 0x1A44;
+
+        public static IList<short> AllVendors => new List<short>()
+        {
+            Yubico,
+            Swissbit,
+            Onespan
+        };
     }
 }
