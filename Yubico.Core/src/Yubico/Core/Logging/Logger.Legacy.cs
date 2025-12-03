@@ -103,11 +103,11 @@ namespace Yubico.Core.Logging
             Exception? exception,
             Func<TState, Exception?, string> formatter)
             {
-                if (_logger != null) _logger.Log(logLevel, eventId, state, exception, formatter);
+                _logger?.Log(logLevel, eventId, state, exception, formatter);
                 if (!IsEnabled(logLevel)) return;
 
                 if (formatter is null) throw new ArgumentNullException(nameof(formatter));
-                if (_log !=null) _log.AddText($"{formatter(state, exception)}");
+                _log?.AddText($"{formatter(state, exception)}");
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace Yubico.Core.Logging
         /// before running the extra diagnostics code.
         /// </remarks>
         [Obsolete("Obsolete, use equivalent ILogger method, or view the changelog for further instruction.")]
-        public bool IsEnabled(LogLevel logLevel) => _logger.IsEnabled(logLevel);
+        public bool IsEnabled(LogLevel logLevel) => _logger?.IsEnabled(logLevel) ?? false;
 
         /// <summary>
         /// Begins a logical operation scope to group log messages together.
@@ -141,6 +141,6 @@ namespace Yubico.Core.Logging
         /// A disposable object that ends the logical operation scope on dispose.
         /// </returns>
         [Obsolete("Obsolete, use equivalent ILogger method, or view the changelog for further instruction.")]
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => _logger.BeginScope(state);
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => _logger?.BeginScope(state);
     }
 }

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -96,7 +97,7 @@ namespace Yubico.Core.Logging
         private static ILoggerFactory? _instance;
         private static readonly object Lock = new object();
 
-        private static Dictionary<string, Logfile> _logs;
+        private static readonly Dictionary<string, Logfile> _logs;
         private static readonly object _lock;
         private static string _loggingFolder;
         private static bool _loggingEnabled;

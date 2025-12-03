@@ -1,6 +1,7 @@
 ﻿
 #pragma warning disable IDE0011 // Add braces
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031  // Do not catch general exception types
+#pragma warning disable CS0618  // Type or member is obsolete
 
 using System;
 using System.Collections.Generic;

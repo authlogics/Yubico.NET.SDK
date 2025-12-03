@@ -167,7 +167,7 @@ namespace Yubico.Core.Logging
             using (var hklm = RegistryKey.OpenBaseKey(RegistryHive, _registryView))
             using (var key = hklm.OpenSubKey(KeyPath, true))
             {
-                if (key != null) key.SetValue(valueName, valueData);
+                key?.SetValue(valueName, valueData);
             }
         }
 
@@ -180,7 +180,7 @@ namespace Yubico.Core.Logging
             using (var hklm = RegistryKey.OpenBaseKey(RegistryHive, _registryView))
             using (var key = hklm.OpenSubKey(KeyPath, true))
             {
-                if (key != null) key.DeleteValue(valueName);
+                key?.DeleteValue(valueName);
             }
         }
     }

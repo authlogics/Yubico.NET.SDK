@@ -13,6 +13,8 @@
 // limitations under the License.
 
 using System;
+using System.Globalization;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -35,10 +37,10 @@ namespace Yubico.Core.Logging
             }
         }
 
-        [Obsolete("Obsolete, use equivalent ILogger method, or view the changelog for further instruction.")]
         /// <summary>
         /// Gets an instance of the active logger, bypassing the factory
         /// </summary>
+        [Obsolete("Obsolete, use equivalent ILogger method, or view the changelog for further instruction.")]
         public static Logger GetLogger()
         {   
             //Return a logger working in two different ways, depending on whether a LoggerFactory has been set
@@ -78,7 +80,7 @@ namespace Yubico.Core.Logging
                         // Format e.g. AuthlogicsAuthenticationServerManager-{0}.log
                         //Name should contain the location for the date string in parameter 0 ie {0}
                         var now = DateTime.Now;
-                        var logFileNameOutput = string.Format(name, $"{now.Year}{now.Month}{now.Day}{now.Hour}{now.Minute}{now.Second}");
+                        var logFileNameOutput = string.Format(CultureInfo.InvariantCulture, name, $"{now.Year}{now.Month}{now.Day}{now.Hour}{now.Minute}{now.Second}");
 
                         logfile = new Logfile(logFileNameOutput, _loggingFolder, _loggingEnabled, overwrite)
                         {
@@ -104,7 +106,7 @@ namespace Yubico.Core.Logging
             try
             {
                 var folder = registry.GetValue("LoggingFolder", RegistryValueKind.String).ToString();
-                if (!string.IsNullOrEmpty(folder)) _loggingFolder = folder;
+                if (!string.IsNullOrEmpty(folder)) { _loggingFolder = folder; }
 
                 var value = registry.GetValue("LoggingEnabled", RegistryValueKind.DWord, false);
                 if (value.ToString() == "1")

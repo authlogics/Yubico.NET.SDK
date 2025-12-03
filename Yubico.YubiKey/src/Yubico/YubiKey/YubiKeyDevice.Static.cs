@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma warning disable CS0618  // Type or member is obsolete
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
