@@ -20,7 +20,7 @@ limitations under the License. -->
     As of 2020, netstandard2.0 allows us to reach the widest audience while providing a large
     enough set of the .NET library to be productive.
     -->
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net472</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
 
     <RootNamespace></RootNamespace>
 
@@ -52,10 +52,27 @@ limitations under the License. -->
     <!-- StrongName signing -->
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\Yubico.NET.SDK.snk</AssemblyOriginatorKeyFile>
+    <PackageId>$(AssemblyName).Intercede</PackageId>
+    <Title>$(AssemblyName) (Intercede)</Title>
+    <Authors>Yubico AB, Intercede</Authors>
+    <Company>Yubico AB, Intercede</Company>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
+    <EnforceCodeStyleInBuild>False</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>False</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <PropertyGroup Label="DocFX settings" Condition="$(Configuration.Contains('WithDocs')) and $(TargetFramework)=='netstandard2.0'">
+    <LogFile>..\docs\log.txt</LogFile>
+    <LogLevel>Warning</LogLevel>
+    <DocParameters>--warningsAsErrors</DocParameters>
   </PropertyGroup>
 
   <ItemGroup Label="Grouping OtpSettings partial classes">
@@ -101,6 +118,7 @@ limitations under the License. -->
     <None Include="..\..\Yubico.NET.SDK.snk">
       <Link>Yubico.NET.SDK.snk</Link>
     </None>
+    <None Include="D:\Authlogics Source\Yubico.NET.SDK\Yubico.YubiKey\src\.editorconfig" />
   </ItemGroup>
 
   <ItemGroup Label="Package references specific to Yubico.YubiKey.dll">
@@ -183,4 +201,8 @@ limitations under the License. -->
     </Exec>
     <Error Condition="'$(DocFXExists)' != '0'" Text="DocFX is not installed. Please install it using: dotnet tool install --global docfx" />
   </Target>
+  <ItemGroup>
+    <EditorConfigFiles Remove="D:\Authlogics Source\Yubico.NET.SDK\Yubico.YubiKey\src\.editorconfig" />
+  </ItemGroup>
+
 </Project>

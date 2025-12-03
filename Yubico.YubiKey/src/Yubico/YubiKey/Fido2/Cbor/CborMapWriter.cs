@@ -25,7 +25,7 @@ namespace Yubico.YubiKey.Fido2.Cbor
     /// Note that the only types supported for <c>TKey</c> are <c>int</c> and
     /// <c>string</c>.
     /// </remarks>
-    internal class CborMapWriter<TKey>
+    public class CborMapWriter<TKey>
     {
         private readonly CborWriter _cbor;
 

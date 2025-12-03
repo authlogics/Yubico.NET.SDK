@@ -19,7 +19,7 @@ limitations under the License. -->
     <RootNamespace></RootNamespace>
 
     <!-- Multi-target build -->
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net472</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <!-- Suppressed warnings-->
@@ -55,6 +55,14 @@ limitations under the License. -->
     <AssemblyOriginatorKeyFile>..\..\Yubico.NET.SDK.snk</AssemblyOriginatorKeyFile>
 
     <DefineConstants Condition="'$(Configuration)' == 'Debug'">$(DefineConstants);ENABLE_SENSITIVE_LOG</DefineConstants>
+
+    <PackageId>$(AssemblyName).Intercede</PackageId>
+
+    <Title>$(AssemblyName) (Intercede)</Title>
+
+    <Authors>Yubico AB, Intercede</Authors>
+
+    <Company>Yubico AB, Intercede</Company>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
@@ -81,6 +89,7 @@ limitations under the License. -->
     <None Include="..\..\Yubico.NET.SDK.snk">
       <Link>Yubico.NET.SDK.snk</Link>
     </None>
+    <None Include="D:\Authlogics Source\Yubico.NET.SDK\Yubico.Core\src\.editorconfig" />
   </ItemGroup>
 
   <ItemGroup Label="Grouping HID code partial classes">
@@ -128,7 +137,9 @@ limitations under the License. -->
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="System.Memory" Version="4.6.3" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
     <!-- The wildcard version tag allows us to include the latest minor and pre-release versions -->
     <PackageReference Include="Yubico.NativeShims" Version="1.*-*" />
   </ItemGroup>
@@ -149,5 +160,9 @@ limitations under the License. -->
       <_Parameter1>DynamicProxyGenAssembly2,PublicKey=0024000004800000940000000602000000240000525341310004000001000100c547cac37abd99c8db225ef2f6c8a3602f3b3606cc9891605d02baa56104f4cfc0734aa39b93bf7852f7d9266654753cc297e7d2edfe0bac1cdcf9f717241550e0a7b191195b7667bb4f64bcb8e2121380fd1d9d46ad2d92d2d15605093924cceaf74c4861eff62abf69b9291ed0a340e113be11e6a7d3113e92484cf7045cc7</_Parameter1>
     </AssemblyAttribute>
 
+  </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="D:\Authlogics Source\Yubico.NET.SDK\Yubico.Core\src\.editorconfig" />
   </ItemGroup>
 </Project>

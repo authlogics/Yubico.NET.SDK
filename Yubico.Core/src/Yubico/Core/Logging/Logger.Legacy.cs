@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma warning disable IDE0011 // Add braces
+
 using System;
 using Microsoft.Extensions.Logging;
 
@@ -39,7 +41,8 @@ namespace Yubico.Core.Logging
     [Obsolete("Obsolete, use equivalent ILogger method, or view the changelog for further instruction.")]
     public sealed class Logger : ILogger
     {
-        private readonly ILogger _logger;
+        private readonly ILogger? _logger;
+        private readonly Logfile? _log;
 
         /// <summary>
         /// Constructs a new instance of the <see cref="Logger"/> class.
@@ -52,6 +55,11 @@ namespace Yubico.Core.Logging
         internal Logger(ILogger logger)
         {
             _logger = logger;
+        }
+
+        internal Logger(string name)
+        {
+            _log = Logging.Log.GetLogFile(name, false);
         }
 
         /// <summary>
@@ -93,8 +101,14 @@ namespace Yubico.Core.Logging
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            _logger.Log(logLevel, eventId, state, exception, formatter);
+            Func<TState, Exception?, string> formatter)
+            {
+                if (_logger != null) _logger.Log(logLevel, eventId, state, exception, formatter);
+                if (!IsEnabled(logLevel)) return;
+
+                if (formatter is null) throw new ArgumentNullException(nameof(formatter));
+                if (_log !=null) _log.AddText($"{formatter(state, exception)}");
+        }
 
         /// <summary>
         /// Checks whether the given `logLevel` has been enabled by the log provider.

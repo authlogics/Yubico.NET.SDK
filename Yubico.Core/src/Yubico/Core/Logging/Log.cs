@@ -96,6 +96,21 @@ namespace Yubico.Core.Logging
         private static ILoggerFactory? _instance;
         private static readonly object Lock = new object();
 
+        private static Dictionary<string, Logfile> _logs;
+        private static readonly object _lock;
+        private static string _loggingFolder;
+        private static bool _loggingEnabled;
+
+        static Log()
+        {
+            _logs = new Dictionary<string, Logfile>();
+            _lock = new object();
+            _loggingFolder = "";
+            _loggingEnabled = false;
+
+            GetProcessSettings();
+        }
+
         /// <summary>
         /// Gets or sets the global <see cref="Microsoft.Extensions.Logging.ILoggerFactory"/> instance used for logging throughout the application.
         /// By default, it's instantiated by using the <c>Logging-section</c> in your

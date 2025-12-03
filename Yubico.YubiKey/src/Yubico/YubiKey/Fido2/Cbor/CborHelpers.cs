@@ -21,7 +21,7 @@ namespace Yubico.YubiKey.Fido2.Cbor
     /// <summary>
     /// Some helpers to make working with CBOR a little easier.
     /// </summary>
-    internal static class CborHelpers
+    public static class CborHelpers
     {
         public const byte True = 0xF5;
         public const byte False = 0xF4;
