@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.2.32602.215
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11312.151 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yubico.Core", "Yubico.Core\src\Yubico.Core.csproj", "{E7157F16-ACD9-427D-A0D3-568B4EF91E7C}"
 EndProject
@@ -397,8 +397,8 @@ Global
 		{A69022BB-4582-4373-AAC7-62712923559B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A69022BB-4582-4373-AAC7-62712923559B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A69022BB-4582-4373-AAC7-62712923559B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B6C9FB57-AF94-4170-AE17-020809E5CED2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B6C9FB57-AF94-4170-AE17-020809E5CED2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6C9FB57-AF94-4170-AE17-020809E5CED2}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{B6C9FB57-AF94-4170-AE17-020809E5CED2}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{B6C9FB57-AF94-4170-AE17-020809E5CED2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B6C9FB57-AF94-4170-AE17-020809E5CED2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3546DD14-6205-447E-82FA-1B43A7AE2483}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

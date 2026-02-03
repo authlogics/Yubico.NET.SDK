@@ -22,12 +22,14 @@ namespace Yubico.YubiKey
         public const short Yubico = 0x1050;
         public const short Swissbit = 0x1370;
         public const short Onespan = 0x1A44;
+        public const short Idemia = 0x225D;
 
         public static IList<short> AllVendors => new List<short>()
         {
             Yubico,
             Swissbit,
-            Onespan
+            Onespan,
+            Idemia
         };
     }
 }
