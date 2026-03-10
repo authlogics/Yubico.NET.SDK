@@ -362,6 +362,7 @@ namespace Yubico.YubiKey.Fido2
             PinUvAuthTokenPermissions permissions,
             string? relyingPartyId = null)
         {
+            Logger.LogInformation("Get AuthToken called");
             // If the caller is willing to use the existing AuthToken (force is
             // false), and it exists, return it.
             // Note that we're not going to check permissions here because even
@@ -370,18 +371,22 @@ namespace Yubico.YubiKey.Fido2
             // it works or not. If not, they'll call again with a force of true.
             if (!forceNewToken && AuthToken is not null)
             {
+                Logger.LogInformation("retrieving existing authtoken: {value}", AuthToken.Value);
                 return AuthToken.Value;
             }
 
             if (AuthenticatorInfo.GetOptionValue(AuthenticatorOptions.pinUvAuthToken) == OptionValue.True)
             {
+                Logger.LogInformation("PinUvAuthToken option exists, Adding Permissions.");
                 AddPermissions(permissions, relyingPartyId); // This will set the auth token
             }
             else
             {
+                Logger.LogInformation("obtaining PinToken only");
                 _ = TryVerifyPin(); // This will set the auth token
             }
 
+            Logger.LogInformation("got AuthToken: {token}", AuthToken ?? ReadOnlyMemory<byte>.Empty);
             return AuthToken ?? ReadOnlyMemory<byte>.Empty;
         }
 

@@ -147,7 +147,7 @@ namespace Yubico.YubiKey.Fido2.PinProtocols
         public override byte[] Authenticate(ReadOnlyMemory<byte> keyData, ReadOnlyMemory<byte> message)
         {
             Guard.IsNotNull(keyData, nameof(keyData));
-            Guard.HasSizeEqualTo(keyData, KeyLength, nameof(keyData));
+            //Guard.HasSizeEqualTo(keyData, KeyLength, nameof(keyData));
             byte[] keyBytes = keyData.ToArray();
             byte[] messageBytes = message.ToArray();
             
