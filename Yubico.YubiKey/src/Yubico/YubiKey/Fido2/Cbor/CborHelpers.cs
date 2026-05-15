@@ -21,7 +21,7 @@ namespace Yubico.YubiKey.Fido2.Cbor
     /// <summary>
     /// Some helpers to make working with CBOR a little easier.
     /// </summary>
-    public static class CborHelpers
+    internal static class CborHelpers
     {
         // Use this delegate to pass in an encoding function (rather than the
         // entire object) for WriteEncodedValue.
