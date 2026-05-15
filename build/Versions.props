@@ -69,7 +69,7 @@ for external milestones.
 
     This project can, and should, use pre-release suffixes for development milestones.
     -->
-    <YubicoYubiKeyVersion>1.11.1</YubicoYubiKeyVersion>
+    <YubicoYubiKeyVersion>1.11.2</YubicoYubiKeyVersion>
 
   </PropertyGroup>
 
