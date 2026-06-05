@@ -112,35 +112,22 @@ and tested in isolation. Known hotspots:
 	  `CryptographyProviders.HmacCreator` now maps algorithm names to non-obsolete HMAC constructors via a
 	  private `CreateHmac` switch (public `Func<string, HMAC>` contract preserved); `PivSession.Attestation.cs`
 	  uses `certificate.GetRSAPublicKey()` instead of the obsolete `PublicKey.Key`. Re-enabled as errors.
-- [ ] `CS86xx` nullable - **IN PROGRESS (paused).** 71 unique sites originally; 10 fixed so far
-	  (the `IEquatable`/`IComparable` signatures on `YubiKeyDevice.Instance.cs` and `FirmwareVersion.cs`,
-	  the `Credential.Equals(object?)` override, both `OnTouch(object?, EventArgs)` handlers in
-	  `CalculateChallengeResponse.cs`, and the two `CS8714` sites fixed via `where TKey : notnull` on
-	  `Fido2/Cbor/CborMap.cs`). **61 remain** - still demoted in `WarningsNotAsErrors`. Resume by running
-	  the enumeration command (see below), then fix the remaining `CS8600/8601/8602/8603/8604` null-flow sites
-	  (Core HID/udev P/Invoke `string?`/`byte[]?` returns, crypto OID/`Oid.Value`/`RSAParameters`/`ECPoint`/
-	  `HashAlgorithm.Hash` paths, FIDO2/COSE, Oath `Credential` query parsing) using real null-flow guards
-	  (NOT blanket `!`). Once 0 remain, remove `CS8600;CS8601;CS8602;CS8603;CS8604;CS8621;CS8622;CS8714;CS8765;CS8767`
-	  from `WarningsNotAsErrors` + the comment block, rebuild, then run Core + YubiKey unit tests.
+- [x] `CS86xx` nullable - **DONE.** All 71 unique sites fixed with real null-flow analysis (guards,
+	  guarded locals, `?? throw`/`?? string.Empty`, `[MaybeNullWhen(false)]`, nullable-enum guards, widened
+	  nullable params, and spreading the already-validated local rather than a re-copied field) - **not**
+	  blanket `!`. Covered the Core HID/udev P/Invoke `string?`/`byte[]?` returns, the crypto
+	  `Oid.Value`/`RSAParameters`/`ECPoint`/`HashAlgorithm.Hash` paths (`ECPublicKey.cs`, `RSAPublicKey.cs`,
+	  `Asn*KeyEncoder`, `PinUvAuthProtocolOne`/`Two.cs`, `Scp11State.cs`), FIDO2/COSE, the Oath `Credential`
+	  query parsing, and `YubiKeyDevice.Static.TryGetYubiKey`. One irreducible C#14 `field`-keyword getter
+	  false positive in `PivSessionAttestTests.cs` was resolved with a single targeted null-forgiving op
+	  (`DeviceMock!`). `CS8600;CS8601;CS8602;CS8603;CS8604;CS8621;CS8622;CS8714;CS8765;CS8767` and the comment
+	  block were removed from `WarningsNotAsErrors`; re-enabled as errors and the full solution builds clean.
+	  Validated by `Yubico.YubiKey.UnitTests` (3550 passed) and `Yubico.Core.UnitTests` (460 passed, 19
+	  platform-skipped).
 - [x] `IDE0031` - "null check can be simplified" - e.g. `Yubico.Core/src/Yubico/Core/Tlv/TlvWriter.cs`. Re-enabled as an error.
 - [x] `IDE0032` - "use auto property" (newly triggered by C# 14's `field` keyword) - e.g.
 	  `Yubico.Core/src/Yubico/Core/Logging/Log.cs`, `Yubico.Core/src/Yubico/Core/Iso7816/CommandApdu.cs`. Re-enabled as an error.
 - [ ] Separately, the ~52 `CS0618` "obsolete member" warnings (not part of the demoted set, and **out of scope**
 	  for this pass - they are the SDK's own `[Obsolete]` PIV key types / internal ml-dsa migration) can be
-	  triaged here. Note: `CS0618` is currently *not* in `WarningsNotAsErrors`; verify it does not become
-	  build-breaking when the `CS86xx` family is re-enabled, and re-add it to the demotion list if needed.
-
-### Resume notes (CS86xx batch, paused)
-
-- Re-enumerate remaining sites (incremental builds do **not** re-emit warnings, so `--no-incremental` is required):
-
-  ```powershell
-  dotnet build Yubico.NET.SDK.sln --configuration Debug --no-incremental --verbosity minimal 2>&1 |
-	Select-String -Pattern "warning (CS8600|CS8601|CS8602|CS8603|CS8604|CS8621|CS8622|CS8714|CS8765|CS8767)" |
-	ForEach-Object { ($_.Line -replace ' \[C:.*$','').Trim() } | Sort-Object -Unique
-  ```
-
-- The demotion token to remove once the batch is clear is on the `WarningsNotAsErrors` line of
-  [`build/CompilerSettings.props`](../build/CompilerSettings.props) (re-read that line before editing - token order is not guaranteed).
-- Crypto/cert paths must be re-validated with the `Yubico.YubiKey.UnitTests` project (3550 tests) after fixing;
-  some cert/crypto paths are only fully exercised by hardware integration tests.
+	  triaged here. Note: `CS0618` is currently *not* in `WarningsNotAsErrors`; it was confirmed to stay
+	  non-build-breaking after the `CS86xx` family was re-enabled.
