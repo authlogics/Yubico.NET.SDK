@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Runtime.ConstrainedExecution;
 using Microsoft.Win32.SafeHandles;
 
 namespace Yubico.PlatformInterop
@@ -35,7 +34,6 @@ namespace Yubico.PlatformInterop
             SetHandle(handle);
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle() =>
             NativeMethods.SCardReleaseContext(handle) == ErrorCode.SCARD_S_SUCCESS;
     }

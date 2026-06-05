@@ -20,17 +20,13 @@ namespace Yubico.YubiKey.Piv;
 public class PivSessionUnitTestBase : IDisposable
 {
     private bool _disposed;
-    private PivSession? _pivSessionMock;
-    private HollowYubiKeyDevice? _deviceMock;
-    private FirmwareVersion? _firmwareVersion;
-    private Func<KeyEntryData, bool>? _keyCollector;
 
-    protected HollowYubiKeyDevice DeviceMock => _deviceMock ??= new HollowYubiKeyDevice(true)
+    protected HollowYubiKeyDevice DeviceMock => field ??= new HollowYubiKeyDevice(true)
     {
         FirmwareVersion = FirmwareVersion
     };
 
-    protected PivSession PivSessionMock => _pivSessionMock ??= GetNewPivSession();
+    protected PivSession PivSessionMock => field ??= GetNewPivSession();
 
     protected PivSession GetNewPivSession()
     {
@@ -50,20 +46,20 @@ public class PivSessionUnitTestBase : IDisposable
 
     protected Func<KeyEntryData, bool>? KeyCollector
     {
-        get => _keyCollector;
+        get => field;
         set
         {
-            _keyCollector = value;
+            field = value;
             PivSessionMock.KeyCollector = value;
         }
     }
 
     protected FirmwareVersion FirmwareVersion
     {
-        get => _firmwareVersion ??= FirmwareVersion.V5_0_0;
+        get => field ??= FirmwareVersion.V5_0_0;
         set
         {
-            _firmwareVersion = value;
+            field = value;
             DeviceMock.FirmwareVersion = value!;
         }
     }

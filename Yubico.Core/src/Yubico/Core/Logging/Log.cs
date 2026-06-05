@@ -94,7 +94,6 @@ namespace Yubico.Core.Logging
     /// </summary>
     public static partial class Log
     {
-        private static ILoggerFactory? _instance;
         private static readonly object Lock = new object();
 
         private static readonly Dictionary<string, Logfile> _logs;
@@ -126,9 +125,9 @@ namespace Yubico.Core.Logging
             get
             {
                 // First check: Quick return if instance is already initialized
-                if (_instance != null)
+                if (field != null)
                 {
-                    return _instance;
+                    return field;
                 }
 
                 // Second check: Thread-safe initialization if instance is null
@@ -136,7 +135,7 @@ namespace Yubico.Core.Logging
                 {
                     // Use null-coalescing assignment to initialize if still null
                     // This prevents multiple initializations in case of concurrent access
-                    return _instance ??= GetDefaultLoggerFactory();
+                    return field ??= GetDefaultLoggerFactory();
                 }
             }
             set
@@ -145,7 +144,7 @@ namespace Yubico.Core.Logging
                 lock (Lock)
                 {
                     // Prevent setting a null value to maintain a valid logger factory
-                    _instance = value ?? throw new ArgumentNullException(nameof(value));
+                    field = value ?? throw new ArgumentNullException(nameof(value));
                 }
             }
         }

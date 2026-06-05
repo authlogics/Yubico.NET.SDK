@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Yubico.YubiKey
 {
@@ -82,12 +81,6 @@ namespace Yubico.YubiKey
         /// <param name="innerException">The exception that is the cause of the current exception, or a null reference (<see langword="Nothing" /> in Visual Basic) if no inner exception is specified.</param>
         public MalformedYubiKeyResponseException(string message, Exception innerException) :
             base(message, innerException)
-        {
-
-        }
-
-        protected MalformedYubiKeyResponseException(SerializationInfo serializationInfo, StreamingContext streamingContext) :
-            base(serializationInfo, streamingContext)
         {
 
         }

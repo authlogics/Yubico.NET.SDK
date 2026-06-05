@@ -14,7 +14,6 @@
 
 using System;
 using System.Globalization;
-using System.Runtime.Serialization;
 
 namespace Yubico.PlatformInterop
 {
@@ -41,12 +40,6 @@ namespace Yubico.PlatformInterop
 
         public SCardException(string message, Exception innerException) :
             base(message, innerException)
-        {
-
-        }
-
-        protected SCardException(SerializationInfo serializationInfo, StreamingContext streamingContext) :
-            base(serializationInfo, streamingContext)
         {
 
         }

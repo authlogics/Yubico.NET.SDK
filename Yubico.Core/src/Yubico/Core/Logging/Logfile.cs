@@ -184,7 +184,12 @@ namespace Yubico.Core.Logging
                 // Update the actual stream if it has been created
                 lock (_lock)
                 {
-                    if (_logStream != null) _logStream.AutoFlush = _autoFlush;
+                    if (_logStream is null)
+                    {
+                        return;
+                    }
+
+                    _logStream.AutoFlush = _autoFlush;
                 }
             }
         }

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Yubico.Core.Iso7816
 {
@@ -94,13 +93,6 @@ namespace Yubico.Core.Iso7816
         /// is specified.</param>
         public ApduException(string message, Exception innerException) :
             base(message, innerException)
-        {
-
-        }
-
-        /// <inheritdoc />
-        protected ApduException(SerializationInfo serializationInfo, StreamingContext streamingContext) :
-            base(serializationInfo, streamingContext)
         {
 
         }

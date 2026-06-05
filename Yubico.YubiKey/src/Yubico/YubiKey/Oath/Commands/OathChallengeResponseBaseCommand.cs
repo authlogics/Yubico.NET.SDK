@@ -71,10 +71,7 @@ namespace Yubico.YubiKey.Oath.Commands
         protected static byte[] CalculateSecret(ReadOnlyMemory<byte> password, ReadOnlyMemory<byte> salt)
         {
 #pragma warning disable CA5379, CA5387 // Do Not Use Weak Key Derivation Function Algorithm
-            using (var pbkBytes = new Rfc2898DeriveBytes(password.ToArray(), salt.ToArray(), 1000))
-            {
-                return pbkBytes.GetBytes(16);
-            }
+            return Rfc2898DeriveBytes.Pbkdf2(password.Span, salt.Span, 1000, HashAlgorithmName.SHA1, 16);
 #pragma warning restore CA5379, CA5387 // Do Not Use Weak Key Derivation Function Algorithm
         }
 

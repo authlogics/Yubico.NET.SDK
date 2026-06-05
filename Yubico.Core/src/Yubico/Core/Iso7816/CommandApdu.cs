@@ -27,9 +27,6 @@ namespace Yubico.Core.Iso7816
         private const int maximumSizeShortEncoding = 256;
         private const int maximumSizeExtendedEncoding = 65536;
 
-        // Backing store for `public int Ne`
-        private int _ne;
-
         /// <summary>
         /// Indicates the class of the instruction.
         /// </summary>
@@ -85,7 +82,7 @@ namespace Yubico.Core.Iso7816
         /// </remarks>
         public int Ne
         {
-            get => _ne;
+            get => field;
 
             set
             {
@@ -95,7 +92,7 @@ namespace Yubico.Core.Iso7816
                 }
                 else
                 {
-                    _ne = value;
+                    field = value;
                 }
             }
         }

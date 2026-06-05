@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Yubico.YubiKey.Fido2
 {
@@ -51,12 +50,6 @@ namespace Yubico.YubiKey.Fido2
         /// <param name="message">The error message that explains the reason for the exception.</param>
         /// <param name="innerException">The exception that is the cause of the current exception.</param>
         public Ctap2DataException(string message, Exception innerException) : base(message, innerException)
-        {
-
-        }
-
-        protected Ctap2DataException(SerializationInfo serializationInfo, StreamingContext streamingContext) :
-            base(serializationInfo, streamingContext)
         {
 
         }

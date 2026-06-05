@@ -14,7 +14,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Runtime.Serialization;
 using Yubico.Core;
 
 namespace Yubico.PlatformInterop
@@ -34,10 +33,6 @@ namespace Yubico.PlatformInterop
         }
 
         public PlatformApiException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        protected PlatformApiException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
 

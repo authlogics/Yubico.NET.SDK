@@ -51,14 +51,12 @@ public class FidoSessionIntegrationTestBase : IDisposable
     protected FirmwareVersion? MinimumFirmwareVersion { get; set; }
     protected StandardTestDevice? TestDeviceType { get; set; }
     protected Fido2Session Session => _session ??= GetSession();
-    protected IYubiKeyConnection Connection => _connection ??= Device.Connect(YubiKeyApplication.Fido2);
-    protected IYubiKeyDevice Device => _device ??= IntegrationTestDeviceEnumeration.GetTestDevice(TestDeviceType);
+    protected IYubiKeyConnection Connection => field ??= Device.Connect(YubiKeyApplication.Fido2);
+    protected IYubiKeyDevice Device => field ??= IntegrationTestDeviceEnumeration.GetTestDevice(TestDeviceType);
     protected TestKeyCollector KeyCollector = new();
 
     private bool _disposed;
-    private IYubiKeyDevice? _device;
     private Fido2Session? _session;
-    private IYubiKeyConnection? _connection;
 
     protected FidoSessionIntegrationTestBase()
     {

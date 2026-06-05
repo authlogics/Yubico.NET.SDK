@@ -14,7 +14,6 @@
 
 using System;
 using System.Globalization;
-using System.Runtime.Serialization;
 
 namespace Yubico.YubiKey.Fido2
 {
@@ -85,12 +84,6 @@ namespace Yubico.YubiKey.Fido2
             }
 
             return string.Format(CultureInfo.InvariantCulture, ExceptionMessages.UnknownFido2Status);
-        }
-
-        protected Fido2Exception(SerializationInfo serializationInfo, StreamingContext streamingContext) :
-            base(serializationInfo, streamingContext)
-        {
-
         }
     }
 }

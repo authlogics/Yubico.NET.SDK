@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 
 namespace Yubico.PlatformInterop
@@ -28,7 +27,6 @@ namespace Yubico.PlatformInterop
         {
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         override protected bool ReleaseHandle()
         {
             NativeMethods.udev_monitor_unref(handle);
