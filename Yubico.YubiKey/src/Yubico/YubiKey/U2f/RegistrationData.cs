@@ -164,7 +164,7 @@ namespace Yubico.YubiKey.U2f
 
             UserPublicKey = encodedResponse.Slice(MsgPublicKeyOffset, PublicKeyLength);
             KeyHandle = encodedResponse.Slice(MsgKeyHandleOffset + 1, KeyHandleLength);
-            AttestationCert = new X509Certificate2(encodedResponse.Slice(MsgCertOffset, certLength).ToArray());
+            AttestationCert = X509CertificateLoader.LoadCertificate(encodedResponse.Slice(MsgCertOffset, certLength).ToArray());
             Signature = encodedResponse.Slice(MsgCertOffset + certLength);
             _berSignatureLength = encodedResponse.Length - (MsgCertOffset + certLength);
         }

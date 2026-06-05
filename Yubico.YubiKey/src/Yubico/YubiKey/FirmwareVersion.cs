@@ -182,7 +182,7 @@ namespace Yubico.YubiKey
             return Equals((FirmwareVersion)obj);
         }
 
-        public bool Equals(FirmwareVersion other) => CompareTo(other) == 0;
+        public bool Equals(FirmwareVersion? other) => CompareTo(other) == 0;
 
         public override int GetHashCode() => HashCode.Combine(Major, Minor, Patch);
 
@@ -223,7 +223,7 @@ namespace Yubico.YubiKey
         /// follows (positive value), or occurs in the same position (0) in the sort order
         /// as the other object.
         /// </returns>
-        public int CompareTo(FirmwareVersion other)
+        public int CompareTo(FirmwareVersion? other)
         {
             if (ReferenceEquals(this, other))
             {

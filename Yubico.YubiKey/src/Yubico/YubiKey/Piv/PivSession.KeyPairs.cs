@@ -600,12 +600,12 @@ namespace Yubico.YubiKey.Piv
             bool isCompressed = hasCertInfo && certInfo.Length > 0 && certInfo.Span[0] == CompressedCert;
             if (!isCompressed)
             {
-                return new X509Certificate2(certBytesCopy);
+                return X509CertificateLoader.LoadCertificate(certBytesCopy);
             }
 
             try
             {
-                return new X509Certificate2(Decompress(certBytesCopy));
+                return X509CertificateLoader.LoadCertificate(Decompress(certBytesCopy));
             }
             catch (Exception)
             {

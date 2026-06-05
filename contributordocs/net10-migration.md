@@ -101,18 +101,46 @@ entry from `WarningsNotAsErrors` so the diagnostic is enforced as an error again
 `SYSLIB0057`/`SYSLIB0060`) change runtime behaviour in security-sensitive crypto code and should be reviewed
 and tested in isolation. Known hotspots:
 
-- [ ] `SYSLIB0004` - `Yubico.Core/src/Yubico/PlatformInterop/Desktop/SCard/SCardCardHandle.cs`,
-	  `.../SCardContext.cs`.
-- [ ] `SYSLIB0051` - `Yubico.Core/src/Yubico/PlatformInterop/PlatformApiException.cs`.
-- [ ] `SYSLIB0057` - `Yubico.YubiKey/src/Yubico/YubiKey/Scp/SecurityDomainSession.cs`,
-	  `Yubico.YubiKey/src/Yubico/YubiKey/Piv/PivSession.KeyPairs.cs` (use `X509CertificateLoader`).
-- [ ] `SYSLIB0060` - `Yubico.YubiKey/src/Yubico/YubiKey/Piv/PivSession.Pinonly.cs` (use `Rfc2898DeriveBytes.Pbkdf2`).
-- [ ] `SYSLIB0027` / `SYSLIB0045` - legacy cryptography factory / algorithm-by-name helpers.
-- [ ] `CS86xx` nullable - e.g. `Yubico.Core/.../Hid/MacOSHidIOReportConnection.cs`,
-	  `Yubico.Core/.../Linux/Udev/LinuxUdevScan.cs`,
-	  `Yubico.YubiKey/src/Yubico/YubiKey/Otp/Operations/CalculateChallengeResponse.cs`,
-	  `Yubico.YubiKey/src/Yubico/YubiKey/YubiKeyDevice.Static.cs`.
-- [ ] `IDE0031` - "null check can be simplified" - e.g. `Yubico.Core/src/Yubico/Core/Tlv/TlvWriter.cs`.
-- [ ] `IDE0032` - "use auto property" (newly triggered by C# 14's `field` keyword) - e.g.
-	  `Yubico.Core/src/Yubico/Core/Logging/Log.cs`, `Yubico.Core/src/Yubico/Core/Iso7816/CommandApdu.cs`.
-- [ ] Separately, the ~52 `CS0618` "obsolete member" warnings (not part of the demoted set) can be triaged here.
+- [x] `SYSLIB0004` - `Yubico.Core/src/Yubico/PlatformInterop/Desktop/SCard/SCardCardHandle.cs`,
+	  `.../SCardContext.cs`. Re-enabled as an error.
+- [x] `SYSLIB0051` - `Yubico.Core/src/Yubico/PlatformInterop/PlatformApiException.cs`. Re-enabled as an error.
+- [x] `SYSLIB0057` - `Yubico.YubiKey/src/Yubico/YubiKey/Scp/SecurityDomainSession.cs`,
+	  `Yubico.YubiKey/src/Yubico/YubiKey/Piv/PivSession.KeyPairs.cs` and
+	  `.../Piv/PivSession.Attestation.cs` (now use `X509CertificateLoader`). Re-enabled as an error.
+- [x] `SYSLIB0060` - `Yubico.YubiKey/src/Yubico/YubiKey/Piv/PivSession.Pinonly.cs` (now uses `Rfc2898DeriveBytes.Pbkdf2`). Re-enabled as an error.
+- [x] `SYSLIB0027` / `SYSLIB0045` - legacy cryptography factory / algorithm-by-name helpers.
+	  `CryptographyProviders.HmacCreator` now maps algorithm names to non-obsolete HMAC constructors via a
+	  private `CreateHmac` switch (public `Func<string, HMAC>` contract preserved); `PivSession.Attestation.cs`
+	  uses `certificate.GetRSAPublicKey()` instead of the obsolete `PublicKey.Key`. Re-enabled as errors.
+- [ ] `CS86xx` nullable - **IN PROGRESS (paused).** 71 unique sites originally; 10 fixed so far
+	  (the `IEquatable`/`IComparable` signatures on `YubiKeyDevice.Instance.cs` and `FirmwareVersion.cs`,
+	  the `Credential.Equals(object?)` override, both `OnTouch(object?, EventArgs)` handlers in
+	  `CalculateChallengeResponse.cs`, and the two `CS8714` sites fixed via `where TKey : notnull` on
+	  `Fido2/Cbor/CborMap.cs`). **61 remain** - still demoted in `WarningsNotAsErrors`. Resume by running
+	  the enumeration command (see below), then fix the remaining `CS8600/8601/8602/8603/8604` null-flow sites
+	  (Core HID/udev P/Invoke `string?`/`byte[]?` returns, crypto OID/`Oid.Value`/`RSAParameters`/`ECPoint`/
+	  `HashAlgorithm.Hash` paths, FIDO2/COSE, Oath `Credential` query parsing) using real null-flow guards
+	  (NOT blanket `!`). Once 0 remain, remove `CS8600;CS8601;CS8602;CS8603;CS8604;CS8621;CS8622;CS8714;CS8765;CS8767`
+	  from `WarningsNotAsErrors` + the comment block, rebuild, then run Core + YubiKey unit tests.
+- [x] `IDE0031` - "null check can be simplified" - e.g. `Yubico.Core/src/Yubico/Core/Tlv/TlvWriter.cs`. Re-enabled as an error.
+- [x] `IDE0032` - "use auto property" (newly triggered by C# 14's `field` keyword) - e.g.
+	  `Yubico.Core/src/Yubico/Core/Logging/Log.cs`, `Yubico.Core/src/Yubico/Core/Iso7816/CommandApdu.cs`. Re-enabled as an error.
+- [ ] Separately, the ~52 `CS0618` "obsolete member" warnings (not part of the demoted set, and **out of scope**
+	  for this pass - they are the SDK's own `[Obsolete]` PIV key types / internal ml-dsa migration) can be
+	  triaged here. Note: `CS0618` is currently *not* in `WarningsNotAsErrors`; verify it does not become
+	  build-breaking when the `CS86xx` family is re-enabled, and re-add it to the demotion list if needed.
+
+### Resume notes (CS86xx batch, paused)
+
+- Re-enumerate remaining sites (incremental builds do **not** re-emit warnings, so `--no-incremental` is required):
+
+  ```powershell
+  dotnet build Yubico.NET.SDK.sln --configuration Debug --no-incremental --verbosity minimal 2>&1 |
+	Select-String -Pattern "warning (CS8600|CS8601|CS8602|CS8603|CS8604|CS8621|CS8622|CS8714|CS8765|CS8767)" |
+	ForEach-Object { ($_.Line -replace ' \[C:.*$','').Trim() } | Sort-Object -Unique
+  ```
+
+- The demotion token to remove once the batch is clear is on the `WarningsNotAsErrors` line of
+  [`build/CompilerSettings.props`](../build/CompilerSettings.props) (re-read that line before editing - token order is not guaranteed).
+- Crypto/cert paths must be re-validated with the `Yubico.YubiKey.UnitTests` project (3550 tests) after fixing;
+  some cert/crypto paths are only fully exercised by hardware integration tests.

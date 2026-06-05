@@ -756,7 +756,7 @@ namespace Yubico.YubiKey
         #region IEquatable<T> and IComparable<T>
 
         /// <inheritdoc/>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (!(obj is IYubiKeyDevice other))
             {
@@ -769,7 +769,7 @@ namespace Yubico.YubiKey
         }
 
         /// <inheritdoc/>
-        public bool Equals(IYubiKeyDevice other)
+        public bool Equals(IYubiKeyDevice? other)
         {
             if (this is null && other is null)
             {
@@ -820,7 +820,7 @@ namespace Yubico.YubiKey
             };
 
         /// <inheritdoc/>
-        public int CompareTo(IYubiKeyDevice other)
+        public int CompareTo(IYubiKeyDevice? other)
         {
             if (other is null)
             {

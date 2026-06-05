@@ -632,7 +632,7 @@ namespace Yubico.YubiKey.Oath
             return hash;
         }
 
-        public override bool Equals(object obj) => Equals(obj as Credential);
+        public override bool Equals(object? obj) => Equals(obj as Credential);
 
         public bool Equals(Credential? credential)
         {

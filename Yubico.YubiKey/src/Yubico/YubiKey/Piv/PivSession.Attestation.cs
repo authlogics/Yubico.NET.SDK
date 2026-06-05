@@ -181,7 +181,7 @@ namespace Yubico.YubiKey.Piv
                 tlvReader = tlvReader.ReadNestedTlv(PivEncodingTag);
                 certData = tlvReader.ReadValue(PivCertTag);
 
-                return new X509Certificate2(certData.ToArray());
+                return X509CertificateLoader.LoadCertificate(certData.ToArray());
             }
 
             throw new NotSupportedException(
@@ -417,10 +417,14 @@ namespace Yubico.YubiKey.Piv
         {
             string oidValue = certificate.PublicKey.Oid.Value;
             bool isRsa = oidValue == Oids.RSA;
-            if (isRsa && certificate.PublicKey.Key.KeySize == KeyDefinitions.RSA1024.LengthInBits)
+            if (isRsa)
             {
-                // RSA 1024 is not supported for attestation.
-                return false;
+                using RSA? rsaPublicKey = certificate.GetRSAPublicKey();
+                if (rsaPublicKey?.KeySize == KeyDefinitions.RSA1024.LengthInBits)
+                {
+                    // RSA 1024 is not supported for attestation.
+                    return false;
+                }
             }
 
             var certKeyType = oidValue switch

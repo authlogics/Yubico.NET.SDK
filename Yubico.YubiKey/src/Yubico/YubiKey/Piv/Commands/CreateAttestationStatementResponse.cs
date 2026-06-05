@@ -86,7 +86,7 @@ namespace Yubico.YubiKey.Piv.Commands
             }
 
             byte[] certData = ResponseApdu.Data.ToArray();
-            return new X509Certificate2(certData);
+            return X509CertificateLoader.LoadCertificate(certData);
         }
     }
 }

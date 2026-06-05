@@ -729,7 +729,7 @@ namespace Yubico.YubiKey.Scp
 
             Logger.LogInformation("Certificates retrieved (KeyReference: {KeyReference})", keyReference);
             return certificateTlvList
-                .Select(tlv => new X509Certificate2(tlv.GetBytes().ToArray()))
+                .Select(tlv => X509CertificateLoader.LoadCertificate(tlv.GetBytes().ToArray()))
                 .ToList();
         }
 

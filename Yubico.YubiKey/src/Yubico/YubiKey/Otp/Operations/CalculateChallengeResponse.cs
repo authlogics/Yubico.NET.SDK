@@ -129,7 +129,7 @@ namespace Yubico.YubiKey.Otp.Operations
                     kb.TouchEvent += OnTouch;
                 }
 
-                void OnTouch(object sender, EventArgs e) => _ = Task.Run(_touchNotify);
+                void OnTouch(object? sender, EventArgs e) => _ = Task.Run(_touchNotify);
 
                 try
                 {

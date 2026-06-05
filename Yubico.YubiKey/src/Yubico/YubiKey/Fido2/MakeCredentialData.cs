@@ -246,7 +246,7 @@ namespace Yubico.YubiKey.Fido2
 
                 for (int index = 0; index < certList.Count; index++)
                 {
-                    attestationCertificates.Add(new X509Certificate2(certList[index]));
+                    attestationCertificates.Add(X509CertificateLoader.LoadCertificate(certList[index]));
                 }
 
                 AttestationCertificates = attestationCertificates;

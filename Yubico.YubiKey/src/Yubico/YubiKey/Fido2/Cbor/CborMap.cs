@@ -24,6 +24,7 @@ namespace Yubico.YubiKey.Fido2.Cbor
     /// a map in a CBOR-encoded construction.
     /// </summary>
     internal class CborMap<TKey>
+        where TKey : notnull
     {
         private readonly IDictionary<TKey, object?> _dict;
 
@@ -120,6 +121,7 @@ namespace Yubico.YubiKey.Fido2.Cbor
         /// element is a key/value pair and each key is of type TNestedKey.
         /// </summary>
         public CborMap<TNestedKey> ReadMap<TNestedKey>(TKey key)
+            where TNestedKey : notnull
         {
             object? value = _dict[key];
 

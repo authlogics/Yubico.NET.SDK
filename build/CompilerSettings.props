@@ -49,12 +49,10 @@ on things like conditions in this file.
     compile with C# 14 (LangVersion 14.0). They are pre-existing issues whose real remediation is tracked as
     a dedicated follow-up (see contributordocs/net10-migration.md). We keep them as visible warnings (rather
     than NoWarn) so they remain on the backlog without breaking the build:
-      SYSLIB0027/0045/0057                - other obsolete BCL APIs newly flagged on net10 (legacy cryptography
-                                           factory/algorithm helpers, X509Certificate2 constructors, etc.).
       CS8600/8601/8602/8603/8604         - nullable reference annotation differences in the net10 BCL.
       CS8621/8622/8714/8765/8767         - nullability mismatches on delegates, overrides and interface members.
     -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);SYSLIB0027;SYSLIB0045;SYSLIB0057;CS8600;CS8601;CS8602;CS8603;CS8604;CS8621;CS8622;CS8714;CS8765;CS8767</WarningsNotAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS8600;CS8601;CS8602;CS8603;CS8604;CS8621;CS8622;CS8714;CS8765;CS8767</WarningsNotAsErrors>
 
     <NeutralLanguage>en-US</NeutralLanguage>
 

@@ -444,6 +444,20 @@ namespace Yubico.YubiKey.Cryptography
         /// This property is a delegate (function pointer). This method will return
         /// an instance of <c>HMAC</c>.
         /// </summary>
-        public static Func<string, HMAC> HmacCreator { get; set; } = HMAC.Create;
+        public static Func<string, HMAC> HmacCreator { get; set; } = CreateHmac;
+
+        // Maps a well-known HMAC algorithm name to the corresponding non-obsolete
+        // parameterless constructor. The obsolete HMAC.Create(string) factory
+        // (SYSLIB0045) routed the name through CryptoConfig; this preserves the
+        // public string-keyed delegate contract without the deprecated factory.
+        private static HMAC CreateHmac(string algorithmName) =>
+            algorithmName switch
+            {
+                "HMACSHA1" => new HMACSHA1(),
+                "HMACSHA256" => new HMACSHA256(),
+                "HMACSHA384" => new HMACSHA384(),
+                "HMACSHA512" => new HMACSHA512(),
+                _ => throw new ArgumentException(ExceptionMessages.UnsupportedAlgorithm, nameof(algorithmName)),
+            };
     }
 }
