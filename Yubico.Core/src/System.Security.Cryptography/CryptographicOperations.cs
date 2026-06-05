@@ -5,10 +5,7 @@
 
 using System.Runtime.CompilerServices;
 
-#if NETSTANDARD2_1_OR_GREATER
-[assembly: TypeForwardedTo(typeof(System.Security.Cryptography.CryptographicOperations))]
-
-#else
+#if NETSTANDARD2_0
 namespace System.Security.Cryptography
 {
     public static class CryptographicOperations
@@ -63,4 +60,6 @@ namespace System.Security.Cryptography
         public static void ZeroMemory(Span<byte> buffer) => buffer.Clear();
     }
 }
+#else
+[assembly: TypeForwardedTo(typeof(System.Security.Cryptography.CryptographicOperations))]
 #endif

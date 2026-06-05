@@ -35,4 +35,5 @@ For information about using the SDK, please refer to the [User's Manual](../docs
 - [Versioning](./versioning.md)
 - [Polyfills](./polyfills.md)
 - [What .NET things/versions can we use?](./allowed-dotnet-things-and-versions.md)
+- [.NET 10 migration (Phase 1 / Phase 1b backlog)](./net10-migration.md)
 - [Testing](testing.md)

@@ -20,7 +20,7 @@ limitations under the License. -->
     As of 2020, netstandard2.0 allows us to reach the widest audience while providing a large
     enough set of the .NET library to be productive.
     -->
-    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net10.0</TargetFrameworks>
 
     <RootNamespace></RootNamespace>
 
@@ -122,7 +122,6 @@ limitations under the License. -->
   </ItemGroup>
 
   <ItemGroup Label="Package references specific to Yubico.YubiKey.dll">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.10" />
     <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0">
       <PrivateAssets>all</PrivateAssets>
@@ -147,6 +146,15 @@ limitations under the License. -->
     <PackageReference Include="System.Formats.Cbor" Version="9.0.10" ExcludeAssets="buildtransitive" />
     <ProjectReference Include="..\..\Yubico.Core\src\Yubico.Core.csproj" />
 
+  </ItemGroup>
+
+  <!--
+  Microsoft.Bcl.AsyncInterfaces backfills IAsyncEnumerable/IAsyncDisposable on .NET Standard. These
+  types are in-box on net10.0, so the package is only referenced for the netstandard target frameworks.
+  Phase 1b will remove it entirely when netstandard is dropped.
+  -->
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard'))">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.10" />
   </ItemGroup>
 
   <!-- This is in order to use the HttpUtility.ParseQueryString in .net472 -->

@@ -43,6 +43,31 @@ on things like conditions in this file.
     -->
     <NoWarn>@(NoWarn);NU5105</NoWarn>
 
+    <!--
+    NU1510 is a restore warning introduced in the .NET 10 SDK that flags PackageReferences which are now
+    provided in-box by the target framework (and would be pruned). With the move to net10.0 this fires for
+    several compatibility packages (e.g. System.Security.Principal.Windows, System.Formats.Asn1). Removing
+    those packages is intentionally deferred to Phase 1b, so for Phase 1 we keep NU1510 as a visible warning
+    rather than an error so the cleanup signal is preserved without breaking the multi-targeted build.
+    -->
+    <WarningsNotAsErrors>@(WarningsNotAsErrors);NU1510</WarningsNotAsErrors>
+
+    <!--
+    The following diagnostics are surfaced only on the net10.0 target because its BCL carries newer
+    obsoletions and nullable annotations than .NET Standard. They are pre-existing issues (not regressions
+    introduced by the .NET 10 multi-target) whose real remediation is deferred to Phase 1b cleanup. We keep
+    them as visible warnings (rather than NoWarn) so they remain on the Phase 1b backlog without breaking the
+    Phase 1 build:
+      SYSLIB0004                         - obsolete Constrained Execution Region (CER) attributes in interop.
+      SYSLIB0051                         - obsolete formatter-based serialization constructors on exceptions.
+      SYSLIB0027/0045/0057/0060          - other obsolete BCL APIs newly flagged on net10 (legacy cryptography
+                                           factory/algorithm helpers, X509Certificate2 constructors, etc.).
+      CS8600/8601/8602/8603/8604         - nullable reference annotation differences in the net10 BCL.
+      CS8621/8622/8714/8765/8767         - nullability mismatches on delegates, overrides and interface members.
+      IDE0031                            - "null check can be simplified" style rule newly triggered on net10.
+    -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);SYSLIB0004;SYSLIB0027;SYSLIB0045;SYSLIB0051;SYSLIB0057;SYSLIB0060;CS8600;CS8601;CS8602;CS8603;CS8604;CS8621;CS8622;CS8714;CS8765;CS8767;IDE0031</WarningsNotAsErrors>
+
     <NeutralLanguage>en-US</NeutralLanguage>
 
     <!--
