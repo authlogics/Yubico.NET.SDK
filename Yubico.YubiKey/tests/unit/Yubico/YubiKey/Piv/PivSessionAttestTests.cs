@@ -25,7 +25,7 @@ namespace Yubico.YubiKey.Piv
         public PivSessionAttestationTests()
         {
             FirmwareVersion = new FirmwareVersion { Major = 4, Minor = 3, Patch = 0 };
-            DeviceMock.AvailableUsbCapabilities = YubiKeyCapabilities.Piv;
+            DeviceMock!.AvailableUsbCapabilities = YubiKeyCapabilities.Piv;
         }
 
         [Theory]

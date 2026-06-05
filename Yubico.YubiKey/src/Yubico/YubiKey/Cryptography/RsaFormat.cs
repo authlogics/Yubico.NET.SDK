@@ -471,7 +471,8 @@ namespace Yubico.YubiKey.Cryptography
 
             // Place H into its location in the buffer.
             // Also, place the 01 (that comes after PS) and the trailer field.
-            Array.Copy(digestHashAlgorithm.Hash, 0, buffer, offsetHash, digestHashAlgorithm.Hash.Length);
+            byte[] hValue = digestHashAlgorithm.Hash ?? throw new CryptographicException(ExceptionMessages.CryptographyProviderFailure);
+            Array.Copy(hValue, 0, buffer, offsetHash, hValue.Length);
             buffer[psLength] = 1;
             buffer[^1] = TrailerField;
 
@@ -1133,7 +1134,8 @@ namespace Yubico.YubiKey.Cryptography
 
             // lHash = digest of empty string.
             _ = digestHashAlgorithm.TransformFinalBlock(buffer, 0, 0);
-            Array.Copy(digestHashAlgorithm.Hash, 0, buffer, digestLength + 1, digestLength);
+            byte[] lHash = digestHashAlgorithm.Hash ?? throw new CryptographicException(ExceptionMessages.CryptographyProviderFailure);
+            Array.Copy(lHash, 0, buffer, digestLength + 1, digestLength);
 
             // 01
             buffer[^(inputData.Length + 1)] = 1;
@@ -1282,11 +1284,12 @@ namespace Yubico.YubiKey.Cryptography
                 // lHash = digest of empty string.
                 digestHashAlgorithm.Initialize();
                 _ = digestHashAlgorithm.TransformFinalBlock(buffer, 0, 0);
+                byte[] lHash = digestHashAlgorithm.Hash ?? throw new CryptographicException(ExceptionMessages.CryptographyProviderFailure);
                 int index = 0;
 
                 for (; index < digestLength; index++)
                 {
-                    errorCount += (int)(digestHashAlgorithm.Hash[index] ^ buffer[index + digestLength + 1]);
+                    errorCount += (int)(lHash[index] ^ buffer[index + digestLength + 1]);
                 }
 
                 // Find the first byte after the PS, make sure it is 01.
@@ -1579,10 +1582,11 @@ namespace Yubico.YubiKey.Cryptography
                 digester.Initialize();
                 _ = digester.TransformBlock(seed, offsetSeed, seedLength, null, 0);
                 _ = digester.TransformFinalBlock(counter, 0, 4);
+                byte[] digesterHash = digester.Hash ?? throw new CryptographicException(ExceptionMessages.CryptographyProviderFailure);
 
                 for (int index = 0; index < xorCount; index++)
                 {
-                    target[offset + index] ^= digester.Hash[index];
+                    target[offset + index] ^= digesterHash[index];
                 }
 
                 bytesRemaining -= xorCount;

@@ -415,7 +415,7 @@ namespace Yubico.YubiKey.Piv
 
         private static bool IsSupportedCert(X509Certificate2 certificate, KeyType keyType)
         {
-            string oidValue = certificate.PublicKey.Oid.Value;
+            string oidValue = certificate.PublicKey.Oid.Value ?? string.Empty;
             bool isRsa = oidValue == Oids.RSA;
             if (isRsa)
             {
@@ -429,8 +429,10 @@ namespace Yubico.YubiKey.Piv
 
             var certKeyType = oidValue switch
             {
-                Oids.ECDSA => GetKeyTypeForECDsa(certificate.GetECDsaPublicKey()),
-                Oids.RSA => GetKeyTypeForRSA(certificate.GetRSAPublicKey()),
+                Oids.ECDSA => GetKeyTypeForECDsa(certificate.GetECDsaPublicKey()
+                    ?? throw new ArgumentException($"Unsupported key type: {keyType}")),
+                Oids.RSA => GetKeyTypeForRSA(certificate.GetRSAPublicKey()
+                    ?? throw new ArgumentException($"Unsupported key type: {keyType}")),
                 Oids.Ed25519 => KeyType.Ed25519,
                 _ => throw new ArgumentException($"Unsupported key type: {keyType}")
             };
@@ -449,10 +451,15 @@ namespace Yubico.YubiKey.Piv
             var parameters = ecdsa.ExportParameters(false);
             return KeyDefinitions.GetByOid(parameters.Curve.Oid).KeyType;
         }
-        
+
         private static KeyType GetKeyTypeForRSA(RSA rsa)
         {
             var parameters = rsa.ExportParameters(false);
+            if (parameters.Modulus is null)
+            {
+                throw new ArgumentException("RSA modulus must be provided.", nameof(rsa));
+            }
+
             return KeyDefinitions.GetByRSAModulusLength(parameters.Modulus).KeyType;
         }
 

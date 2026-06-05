@@ -43,17 +43,6 @@ on things like conditions in this file.
     -->
     <NoWarn>@(NoWarn);NU5105</NoWarn>
 
-    <!--
-    The following diagnostics are surfaced on the net10.0 target because its BCL carries newer obsoletions
-    and nullable annotations than the .NET Standard targets we used to build against, and because we now
-    compile with C# 14 (LangVersion 14.0). They are pre-existing issues whose real remediation is tracked as
-    a dedicated follow-up (see contributordocs/net10-migration.md). We keep them as visible warnings (rather
-    than NoWarn) so they remain on the backlog without breaking the build:
-      CS8600/8601/8602/8603/8604         - nullable reference annotation differences in the net10 BCL.
-      CS8621/8622/8714/8765/8767         - nullability mismatches on delegates, overrides and interface members.
-    -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS8600;CS8601;CS8602;CS8603;CS8604;CS8621;CS8622;CS8714;CS8765;CS8767</WarningsNotAsErrors>
-
     <NeutralLanguage>en-US</NeutralLanguage>
 
     <!--

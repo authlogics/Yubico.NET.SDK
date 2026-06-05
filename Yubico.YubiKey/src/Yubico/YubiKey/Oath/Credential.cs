@@ -63,7 +63,7 @@ namespace Yubico.YubiKey.Oath
             get => _type;
             set
             {
-                if (!Enum.IsDefined(typeof(CredentialType), value))
+                if (value is null || !Enum.IsDefined(typeof(CredentialType), value.Value))
                 {
                     throw new InvalidOperationException(
                         string.Format(
@@ -88,7 +88,7 @@ namespace Yubico.YubiKey.Oath
             get => _algorithm;
             set
             {
-                if (!Enum.IsDefined(typeof(HashAlgorithm), value))
+                if (value is null || !Enum.IsDefined(typeof(HashAlgorithm), value.Value))
                 {
                     throw new InvalidOperationException(
                         string.Format(
@@ -404,7 +404,7 @@ namespace Yubico.YubiKey.Oath
         /// <param name="requireTouch">
         /// The credential requires the user to touch the key to generate a one-time password.
         /// </param>
-        public Credential(string? issuer, string account, CredentialType type, HashAlgorithm algorithm, string secret, CredentialPeriod period, int digits, int? counter, bool requireTouch)
+        public Credential(string? issuer, string account, CredentialType type, HashAlgorithm algorithm, string? secret, CredentialPeriod period, int digits, int? counter, bool requireTouch)
         {
             Issuer = issuer;
             AccountName = account;
@@ -512,12 +512,12 @@ namespace Yubico.YubiKey.Oath
             string? defaultIssuer = parsedUri["issuer"];
             (string? issuer, string account) = ParseUriPath(uriPath, defaultIssuer);
 
-            string secret = parsedUri["secret"];
+            string? secret = parsedUri["secret"];
 
             var type = uri.Host == "totp" ? CredentialType.Totp : CredentialType.Hotp;
 
             var algorithm = HashAlgorithm.Sha1;
-            string algorithmString = parsedUri["algorithm"];
+            string? algorithmString = parsedUri["algorithm"];
 
             if (!string.IsNullOrWhiteSpace(algorithmString))
             {
@@ -547,7 +547,7 @@ namespace Yubico.YubiKey.Oath
             }
 
             int digits = DefaultDigits;
-            string digitsString = parsedUri["digits"];
+            string? digitsString = parsedUri["digits"];
 
             if (!string.IsNullOrWhiteSpace(digitsString) && !int.TryParse(digitsString, NumberStyles.Any,
                 CultureInfo.InvariantCulture, out digits))
@@ -556,7 +556,7 @@ namespace Yubico.YubiKey.Oath
             }
 
             var credentialPeriod = CredentialPeriod.Period30;
-            string periodString = parsedUri["period"];
+            string? periodString = parsedUri["period"];
 
             if (!string.IsNullOrWhiteSpace(periodString))
             {
@@ -575,7 +575,7 @@ namespace Yubico.YubiKey.Oath
                 }
             }
 
-            string counterString = parsedUri["counter"];
+            string? counterString = parsedUri["counter"];
             int? counter = int.TryParse(counterString, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result) ? result : (int?)null;
 
             if (issuer != null)

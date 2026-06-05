@@ -92,7 +92,10 @@ internal static class PivKeyEncoder
     public static Memory<byte> EncodeRSAPrivateKey(RSAPrivateKey privateKey)
     {
         var rsaParameters = privateKey.Parameters;
-        if (rsaParameters.P.Length != rsaParameters.Q.Length ||
+        if (rsaParameters.P is null || rsaParameters.Q is null ||
+            rsaParameters.DP is null || rsaParameters.DQ is null ||
+            rsaParameters.InverseQ is null ||
+            rsaParameters.P.Length != rsaParameters.Q.Length ||
             rsaParameters.DP.Length != rsaParameters.P.Length ||
             rsaParameters.DQ.Length != rsaParameters.P.Length ||
             rsaParameters.InverseQ.Length != rsaParameters.P.Length)

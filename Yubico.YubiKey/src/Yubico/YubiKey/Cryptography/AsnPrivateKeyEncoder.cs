@@ -124,7 +124,8 @@ internal static class AsnPrivateKeyEncoder
             throw new ArgumentException("Private key parameter D must be provided.");
         }
 
-        string curveOid = parameters.Curve.Oid.Value;
+        string curveOid = parameters.Curve.Oid.Value
+            ?? throw new ArgumentException("Curve OID must be provided.", nameof(parameters));
         ReadOnlyMemory<byte> privateKey = parameters.D;
 
         // Create public point if Q coordinates are available

@@ -35,6 +35,11 @@ namespace Yubico.Core.Cryptography
         /// </returns>
         public static (SafeEcGroup group, SafeEcPoint point) ToSslPublicKey(this ECParameters parameters)
         {
+            if (parameters.Q.X is null || parameters.Q.Y is null)
+            {
+                throw new ArgumentException("Public key coordinates must not be null.", nameof(parameters));
+            }
+
             SafeEcGroup group = NativeMethods.EcGroupNewByCurveName(parameters.Curve.ToSslCurveId());
             SafeEcPoint point = NativeMethods.EcPointNew(group);
 

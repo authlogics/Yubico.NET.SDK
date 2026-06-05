@@ -70,7 +70,7 @@ internal class PivKeyDecoder
         var parameters = new ECParameters
         {
             Q = new ECPoint { X = x, Y = y },
-            Curve = ECCurve.CreateFromValue(keyDefinition.CurveOid)
+            Curve = ECCurve.CreateFromValue(keyDefinition.CurveOid ?? string.Empty)
         };
 
         return ECPublicKey.CreateFromParameters(parameters);

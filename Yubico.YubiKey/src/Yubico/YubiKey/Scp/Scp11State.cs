@@ -76,6 +76,11 @@ namespace Yubico.YubiKey.Scp
             // Create an encoded point of the ephemeral public key to send to the Yubikey
             byte[] epkOceEckaEncodedPoint = new byte[65];
             epkOceEckaEncodedPoint[0] = 0x04; // Format identifier byte
+            if (ekpOceEcka.Q.X is null || ekpOceEcka.Q.Y is null)
+            {
+                throw new InvalidOperationException(ExceptionMessages.UnknownScpError);
+            }
+
             ekpOceEcka.Q.X.CopyTo(epkOceEckaEncodedPoint, 1);
             ekpOceEcka.Q.Y.CopyTo(epkOceEckaEncodedPoint, 33);
 

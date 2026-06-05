@@ -89,20 +89,20 @@ namespace Yubico.Core.Devices.Hid
         private static string DeviceGetPath(IntPtr udevDevice)
         {
             IntPtr pathPtr = NativeMethods.udev_device_get_syspath(udevDevice);
-            return Marshal.PtrToStringAnsi(pathPtr);
+            return Marshal.PtrToStringAnsi(pathPtr) ?? string.Empty;
         }
 
         private static string DeviceGetPath(LinuxUdevDeviceSafeHandle udevDevice)
         {
             IntPtr pathPtr = NativeMethods.udev_device_get_syspath(udevDevice);
-            return Marshal.PtrToStringAnsi(pathPtr);
+            return Marshal.PtrToStringAnsi(pathPtr) ?? string.Empty;
         }
 
         // Get the devnode from the device.
         private static string DeviceGetDevnode(LinuxUdevDeviceSafeHandle udevDevice)
         {
             IntPtr devnodePtr = NativeMethods.udev_device_get_devnode(udevDevice);
-            return Marshal.PtrToStringAnsi(devnodePtr);
+            return Marshal.PtrToStringAnsi(devnodePtr) ?? string.Empty;
         }
 
         private static string? GetParentDevicePath(LinuxUdevDeviceSafeHandle udevDevice)

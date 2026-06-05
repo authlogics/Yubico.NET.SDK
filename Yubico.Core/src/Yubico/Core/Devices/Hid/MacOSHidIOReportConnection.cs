@@ -168,7 +168,7 @@ namespace Yubico.Core.Devices.Hid
         /// </exception>
         public byte[] GetReport()
         {
-            if (_reportsQueue.TryDequeue(out byte[] report))
+            if (_reportsQueue.TryDequeue(out byte[]? report))
             {
                 // If there's already a report in the queue (i.e. the callback beat us to calling GetReport) return
                 // that one immediately.
@@ -205,7 +205,14 @@ namespace Yubico.Core.Devices.Hid
 
             // We should be guaranteed to have a report here - otherwise the runloop would have timed out
             // and the PlatformApiException above would have been thrown.
-            _ = _reportsQueue.TryDequeue(out report);
+            if (!_reportsQueue.TryDequeue(out report))
+            {
+                throw new PlatformApiException(
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        ExceptionMessages.WrongIOKitRunLoopMode,
+                        runLoopResult));
+            }
 
             _log.SensitiveLogInformation(
                 "GetReport returned buffer: {Report}",
@@ -263,8 +270,10 @@ namespace Yubico.Core.Devices.Hid
                     reportLength);
             }
 
-            var reportsQueue = (ConcurrentQueue<byte[]>)GCHandle.FromIntPtr(context).Target;
-            reportsQueue.Enqueue(report);
+            if (GCHandle.FromIntPtr(context).Target is ConcurrentQueue<byte[]> reportsQueue)
+            {
+                reportsQueue.Enqueue(report);
+            }
         }
 
         /// <summary>

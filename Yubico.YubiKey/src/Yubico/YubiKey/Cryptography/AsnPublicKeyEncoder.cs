@@ -123,7 +123,8 @@ internal static class AsnPublicKeyEncoder
             throw new ArgumentException("EC point coordinates cannot be null.", nameof(parameters));
         }
 
-        string curveOid = parameters.Curve.Oid.Value;
+        string curveOid = parameters.Curve.Oid.Value
+            ?? throw new ArgumentException("Curve OID must be provided.", nameof(parameters));
 
         // Create the uncompressed EC point format: 0x04 || X || Y
         byte[] xCoordinate = parameters.Q.X;

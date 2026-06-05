@@ -166,7 +166,11 @@ namespace Yubico.YubiKey.Fido2.PinProtocols
             using var sha256 = CryptographyProviders.Sha256Creator();
 
             _ = sha256.TransformFinalBlock(sharedSecret, 0, sharedSecret.Length);
-            if (sha256.Hash.Length != KeyLength)
+            byte[] sha256Hash = sha256.Hash ?? throw new InvalidOperationException(
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    ExceptionMessages.CryptographyProviderFailure));
+            if (sha256Hash.Length != KeyLength)
             {
                 throw new InvalidOperationException(
                     string.Format(
@@ -174,7 +178,7 @@ namespace Yubico.YubiKey.Fido2.PinProtocols
                         ExceptionMessages.CryptographyProviderFailure));
             }
 
-            Array.Copy(sha256.Hash, _aesEncKey, KeyLength);
+            Array.Copy(sha256Hash, _aesEncKey, KeyLength);
 
             EncryptionKey = _aesEncKey;
             AuthenticationKey = _aesEncKey;

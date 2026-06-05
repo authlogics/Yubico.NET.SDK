@@ -72,11 +72,17 @@ public class ECPublicKey : PublicKey
                 "Parameters must not contain private key data (D value)", nameof(parameters));
         }
 
+        if (parameters.Q.X is null || parameters.Q.Y is null)
+        {
+            throw new ArgumentException(
+                "Parameters must contain the public point coordinates.", nameof(parameters));
+        }
+
         Parameters = parameters.DeepCopy();
         KeyDefinition = KeyDefinitions.GetByOid(Parameters.Curve.Oid);
 
         // Format identifier (uncompressed point): 0x04
-        _publicPointBytes = [0x4, .. Parameters.Q.X, .. Parameters.Q.Y];
+        _publicPointBytes = [0x4, .. parameters.Q.X, .. parameters.Q.Y];
     }
 
     /// <summary>
@@ -92,6 +98,12 @@ public class ECPublicKey : PublicKey
 
         Parameters = ecdsa.ExportParameters(false);
         KeyDefinition = KeyDefinitions.GetByOid(Parameters.Curve.Oid);
+
+        if (Parameters.Q.X is null || Parameters.Q.Y is null)
+        {
+            throw new ArgumentException(
+                "The key does not contain the public point coordinates.", nameof(ecdsa));
+        }
 
         // Format identifier (uncompressed point): 0x04
         _publicPointBytes = [0x4, .. Parameters.Q.X, .. Parameters.Q.Y];
@@ -126,7 +138,7 @@ public class ECPublicKey : PublicKey
         }
 
         int coordinateLength = keyDefinition.LengthInBytes;
-        var curve = ECCurve.CreateFromValue(keyDefinition.CurveOid);
+        var curve = ECCurve.CreateFromValue(keyDefinition.CurveOid ?? string.Empty);
         var ecParameters = new ECParameters
         {
             Curve = curve,

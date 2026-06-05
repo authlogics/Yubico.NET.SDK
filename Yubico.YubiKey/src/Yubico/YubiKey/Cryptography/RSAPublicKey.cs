@@ -51,6 +51,11 @@ public sealed class RSAPublicKey : PublicKey
 
     private RSAPublicKey(RSAParameters parameters)
     {
+        if (parameters.Modulus is null)
+        {
+            throw new ArgumentException("RSA modulus must be provided.", nameof(parameters));
+        }
+
         Parameters = parameters.DeepCopy();
         KeyDefinition = KeyDefinitions.GetByRSAModulusLength(parameters.Modulus);
     }

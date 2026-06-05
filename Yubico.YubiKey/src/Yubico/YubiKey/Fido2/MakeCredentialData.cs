@@ -290,7 +290,9 @@ namespace Yubico.YubiKey.Fido2
             _ = digester.TransformFinalBlock(clientDataHash.ToArray(), 0, clientDataHash.Length);
 
             using var ecdsaVfy = new EcdsaVerify(AttestationCertificates[0]);
-            return ecdsaVfy.VerifyDigestedData(digester.Hash, AttestationStatement.ToArray());
+            return ecdsaVfy.VerifyDigestedData(
+                digester.Hash ?? throw new InvalidOperationException(ExceptionMessages.CryptographyProviderFailure),
+                AttestationStatement.ToArray());
         }
     }
 }

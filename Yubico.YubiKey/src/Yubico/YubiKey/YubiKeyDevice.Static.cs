@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -154,7 +155,7 @@ namespace Yubico.YubiKey
         /// <param name="serialNumber">Integer representation of the YubiKey serial number.</param>
         /// <param name="yubiKey">Out parameter that returns an <see cref="IYubiKeyDevice"/> instance.</param>
         /// <returns>A bool indicating whether the YubiKey was found.</returns>
-        public static bool TryGetYubiKey(int serialNumber, out IYubiKeyDevice yubiKey)
+        public static bool TryGetYubiKey(int serialNumber, [MaybeNullWhen(false)] out IYubiKeyDevice yubiKey)
         {
             yubiKey = FindAll().FirstOrDefault(k => k.SerialNumber == serialNumber);
             return yubiKey != null;

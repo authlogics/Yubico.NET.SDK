@@ -260,7 +260,8 @@ namespace Yubico.YubiKey.Cryptography
         /// </exception>
         public EcdsaVerify(X509Certificate2 certificate)
         {
-            ECDsa = CheckECDsa(certificate.GetECDsaPublicKey());
+            ECDsa = CheckECDsa(certificate.GetECDsaPublicKey()
+                ?? throw new ArgumentException(ExceptionMessages.UnsupportedAlgorithm, nameof(certificate)));
         }
 
         /// <summary>
@@ -403,10 +404,11 @@ namespace Yubico.YubiKey.Cryptography
         private static ECDsa CheckECDsa(ECDsa toCheck)
         {
             var ecParameters = toCheck.ExportParameters(false);
-            var keyDefinition = KeyDefinitions.GetByOid(ecParameters.Curve.Oid.Value);
+            var keyDefinition = KeyDefinitions.GetByOid(ecParameters.Curve.Oid.Value ?? string.Empty);
             int coordinateLength = keyDefinition.LengthInBytes;
 
-            if (ecParameters.Q.X.Length == 0 ||
+            if (ecParameters.Q.X is null || ecParameters.Q.Y is null ||
+                ecParameters.Q.X.Length == 0 ||
                 ecParameters.Q.X.Length > coordinateLength ||
                 ecParameters.Q.Y.Length == 0 ||
                 ecParameters.Q.Y.Length > coordinateLength)

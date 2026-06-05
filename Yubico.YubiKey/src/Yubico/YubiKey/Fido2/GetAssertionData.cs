@@ -209,7 +209,9 @@ namespace Yubico.YubiKey.Fido2
             _ = digesterHashAlgorithm.TransformFinalBlock(clientDataHash.ToArray(), 0, clientDataHash.Length);
 
             using var ecdsaVfy = new EcdsaVerify(publicKey);
-            return ecdsaVfy.VerifyDigestedData(digesterHashAlgorithm.Hash, Signature.ToArray());
+            return ecdsaVfy.VerifyDigestedData(
+                digesterHashAlgorithm.Hash ?? throw new InvalidOperationException(ExceptionMessages.CryptographyProviderFailure),
+                Signature.ToArray());
         }
 
         /// <summary>

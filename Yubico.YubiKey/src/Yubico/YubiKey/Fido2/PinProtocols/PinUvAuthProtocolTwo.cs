@@ -218,7 +218,11 @@ namespace Yubico.YubiKey.Fido2.PinProtocols
                 _ = hmacSha256.TransformFinalBlock(infoAes, 0, TrailingByteCount);
 
                 // Save the AES key.
-                Array.Copy(hmacSha256.Hash, _aesEncKey, KeyLength);
+                byte[] aesHash = hmacSha256.Hash ?? throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        ExceptionMessages.CryptographyProviderFailure));
+                Array.Copy(aesHash, _aesEncKey, KeyLength);
 
                 // Expand (HMAC key)
                 byte[] infoHmac = Encoding.ASCII.GetBytes(InfoHmac);
@@ -227,7 +231,11 @@ namespace Yubico.YubiKey.Fido2.PinProtocols
                 _ = hmacSha256.TransformFinalBlock(infoHmac, 0, TrailingByteCount);
 
                 // Save the HMAC key.
-                Array.Copy(hmacSha256.Hash, _hmacAuthKey, KeyLength);
+                byte[] hmacHash = hmacSha256.Hash ?? throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        ExceptionMessages.CryptographyProviderFailure));
+                Array.Copy(hmacHash, _hmacAuthKey, KeyLength);
             }
             finally
             {

@@ -143,7 +143,7 @@ namespace Yubico.YubiKey.Cryptography
         /// <exception cref="NotSupportedException">
         ///  When the OID is not supported or when the OID is for an RSA key.
         /// </exception>
-        public static KeyDefinition GetByOid(Oid oid) => GetByOid(oid.Value);
+        public static KeyDefinition GetByOid(Oid oid) => GetByOid(oid.Value ?? string.Empty);
 
         /// <summary>
         /// Gets a key definition by its object identifier (OID).
@@ -178,7 +178,7 @@ namespace Yubico.YubiKey.Cryptography
                     ExceptionMessages.UnsupportedAlgorithm));
         }
 
-        public static KeyType GetKeyTypeByOid(Oid algorithmOid) => GetKeyTypeByOid(algorithmOid.Value);
+        public static KeyType GetKeyTypeByOid(Oid algorithmOid) => GetKeyTypeByOid(algorithmOid.Value ?? string.Empty);
 
         public static KeyType GetKeyTypeByOid(string algorithmOid)
         {

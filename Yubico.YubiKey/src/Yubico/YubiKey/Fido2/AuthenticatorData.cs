@@ -399,7 +399,7 @@ namespace Yubico.YubiKey.Fido2
                 return false;
             }
 
-            if (Extensions.TryGetValue(extensionKey, out byte[] value) != true)
+            if (Extensions.TryGetValue(extensionKey, out byte[]? value) != true)
             {
                 encodedValue = Array.Empty<byte>();
                 return false;
