@@ -58,55 +58,60 @@ not lost:
 | `CS8621`/`CS8622`/`CS8714`/`CS8765`/`CS8767` | Nullability mismatches on delegates, overrides and interface members. | Align the nullability of the signatures. |
 | `IDE0031` | "Null check can be simplified" style rule newly triggered on net10. | Apply the suggested simplification. |
 
-## Phase 1b - single-target cleanup (TODO)
+## Phase 1b - single-target structural cleanup (DONE)
 
-Phase 1b drops `.NET Standard` entirely and removes everything that only existed to support it. None of the
-items below were done in Phase 1.
+Phase 1b dropped `.NET Standard` entirely and removed everything that only existed to support it.
 
 ### Targeting
 
-- [ ] Change both production libraries to single-target `net10.0` (remove `netstandard2.0` and `netstandard2.1`
-	  from `TargetFrameworks`).
-- [ ] Raise C# `LangVersion` from `13.0` to `14.0` in [`build/CompilerSettings.props`](../build/CompilerSettings.props).
+- [x] Both production libraries now single-target `net10.0` (`TargetFrameworks` collapsed to a single
+	  `TargetFramework`): `Yubico.Core/src/Yubico.Core.csproj`, `Yubico.YubiKey/src/Yubico.YubiKey.csproj`.
+- [x] Raised C# `LangVersion` from `13.0` to `14.0` in
+	  [`build/CompilerSettings.props`](../build/CompilerSettings.props).
 
-### Remove polyfills and compatibility packages
+### Removed polyfills and compatibility packages
 
-- [ ] Delete the `Yubico.DotNetPolyfills` project (`Yubico.DotNetPolyfills/src`) and all references to it.
-- [ ] Delete the in-tree `CryptographicOperations` polyfill
-	  (`Yubico.Core/src/System.Security.Cryptography/CryptographicOperations.cs`).
-- [ ] Remove the `netstandard`-only item groups and the packages they reference: `System.Memory`,
+- [x] `Yubico.DotNetPolyfills` - not applicable: no such project exists in this fork (no directory, no
+	  references), so there was nothing to delete.
+- [x] Deleted the in-tree `CryptographicOperations` polyfill (previously at
+	  `Yubico.Core/src/System.Security.Cryptography/CryptographicOperations.cs`); net10 uses the in-box
+	  `System.Security.Cryptography.CryptographicOperations`.
+- [x] Removed the `netstandard`-only item groups and their packages: `System.Memory`,
 	  `Microsoft.Bcl.HashCode` (Yubico.Core) and `Microsoft.Bcl.AsyncInterfaces` (Yubico.YubiKey).
-- [ ] Remove `PolySharp` and `Nullable` package references (their features are in-box on net10).
-- [ ] Prune the packages flagged by `NU1510`: `System.Formats.Asn1`
-	  (`Yubico.YubiKey/tests/integration`) and `System.Security.Principal.Windows`
-	  (`Yubico.YubiKey/tests/sandbox`). Re-evaluate `System.Formats.Cbor` on the production libraries.
-- [ ] Once `NU1510` no longer fires, remove it from `WarningsNotAsErrors`.
+- [x] Removed `PolySharp` (both libraries) and `Nullable` (Yubico.YubiKey); their features are in-box on net10.
+- [x] Pruned the packages flagged by `NU1510` (now provided in-box by the framework): `Microsoft.Win32.Registry`,
+	  `System.Security.Principal.Windows`, `System.Text.Encoding.CodePages` (Yubico.Core), `System.Formats.Asn1`
+	  (Yubico.YubiKey and `tests/integration`), and `System.Security.Principal.Windows` (`tests/sandbox`).
+	  `System.Formats.Cbor` was kept - it is a standalone package, not in-box.
+- [x] `NU1510` no longer fires, so it was removed from `WarningsNotAsErrors`.
 
-### Collapse conditional compilation
+### Collapsed conditional compilation
 
-- [ ] Remove `#if NETSTANDARD` / `#if NETSTANDARD2_0` / `#if NETSTANDARD2_1_OR_GREATER` blocks now that only
-	  one target remains.
+- [x] Removed the only `#if NETSTANDARD` block in source (`Yubico.Core/src/Yubico/Core/Tlv/TlvObject.cs`),
+	  keeping the modern `StringComparison.Ordinal` branch. `#if NETFRAMEWORK` blocks were left intact (they
+	  guard the `net472`-specific code paths and are independent of the netstandard removal).
 
-### Properly fix the demoted diagnostics, then re-enable errors
+## Follow-up - diagnostic remediation (TODO)
 
-Address each family from the table above and then remove the corresponding entry from `WarningsNotAsErrors`
-so the diagnostics are enforced as errors again. Known hotspots observed during the Phase 1 build:
+The structural cleanup intentionally left the net10 analyzer/obsolete diagnostics **demoted** (visible
+warnings, not errors) via `WarningsNotAsErrors` in [`build/CompilerSettings.props`](../build/CompilerSettings.props).
+Raising to C# 14 additionally surfaced `IDE0032`. Address each family below, then remove the corresponding
+entry from `WarningsNotAsErrors` so the diagnostic is enforced as an error again. Several fixes (notably
+`SYSLIB0057`/`SYSLIB0060`) change runtime behaviour in security-sensitive crypto code and should be reviewed
+and tested in isolation. Known hotspots:
 
 - [ ] `SYSLIB0004` - `Yubico.Core/src/Yubico/PlatformInterop/Desktop/SCard/SCardCardHandle.cs`,
 	  `.../SCardContext.cs`.
 - [ ] `SYSLIB0051` - `Yubico.Core/src/Yubico/PlatformInterop/PlatformApiException.cs`.
 - [ ] `SYSLIB0057` - `Yubico.YubiKey/src/Yubico/YubiKey/Scp/SecurityDomainSession.cs`,
-	  `Yubico.YubiKey/src/Yubico/YubiKey/Piv/PivSession.KeyPairs.cs`.
-- [ ] `SYSLIB0060` - `Yubico.YubiKey/src/Yubico/YubiKey/Piv/PivSession.Pinonly.cs`.
+	  `Yubico.YubiKey/src/Yubico/YubiKey/Piv/PivSession.KeyPairs.cs` (use `X509CertificateLoader`).
+- [ ] `SYSLIB0060` - `Yubico.YubiKey/src/Yubico/YubiKey/Piv/PivSession.Pinonly.cs` (use `Rfc2898DeriveBytes.Pbkdf2`).
+- [ ] `SYSLIB0027` / `SYSLIB0045` - legacy cryptography factory / algorithm-by-name helpers.
 - [ ] `CS86xx` nullable - e.g. `Yubico.Core/.../Hid/MacOSHidIOReportConnection.cs`,
 	  `Yubico.Core/.../Linux/Udev/LinuxUdevScan.cs`,
 	  `Yubico.YubiKey/src/Yubico/YubiKey/Otp/Operations/CalculateChallengeResponse.cs`,
 	  `Yubico.YubiKey/src/Yubico/YubiKey/YubiKeyDevice.Static.cs`.
-- [ ] `IDE0031` - e.g. `Yubico.Core/src/Yubico/Core/Tlv/TlvWriter.cs`.
-
-### Documentation
-
-- [ ] Refresh [`allowed-dotnet-things-and-versions.md`](./allowed-dotnet-things-and-versions.md) to describe the
-	  net10-only posture (BCL = .NET 10, C# 14.0, SDK 10.0.x) instead of .NET Standard 2.0 / C# 8.0 / .NET 5.
-- [ ] Add or refresh `polyfills.md` (currently linked from the contributor docs index but missing); after
-	  Phase 1b it should explain that polyfills are no longer required.
+- [ ] `IDE0031` - "null check can be simplified" - e.g. `Yubico.Core/src/Yubico/Core/Tlv/TlvWriter.cs`.
+- [ ] `IDE0032` - "use auto property" (newly triggered by C# 14's `field` keyword) - e.g.
+	  `Yubico.Core/src/Yubico/Core/Logging/Log.cs`, `Yubico.Core/src/Yubico/Core/Iso7816/CommandApdu.cs`.
+- [ ] Separately, the ~52 `CS0618` "obsolete member" warnings (not part of the demoted set) can be triaged here.

@@ -25,7 +25,7 @@ on things like conditions in this file.
   Settings that affect ALL projects, including test and reference assemblies.
   -->
   <PropertyGroup Label="Global C# language and build settings">
-    <LangVersion>13.0</LangVersion>
+    <LangVersion>14.0</LangVersion>
 
     <!--
     Enable nullable reference types. This is a C# 8.0 feature that is off by default, due to backward
@@ -44,20 +44,11 @@ on things like conditions in this file.
     <NoWarn>@(NoWarn);NU5105</NoWarn>
 
     <!--
-    NU1510 is a restore warning introduced in the .NET 10 SDK that flags PackageReferences which are now
-    provided in-box by the target framework (and would be pruned). With the move to net10.0 this fires for
-    several compatibility packages (e.g. System.Security.Principal.Windows, System.Formats.Asn1). Removing
-    those packages is intentionally deferred to Phase 1b, so for Phase 1 we keep NU1510 as a visible warning
-    rather than an error so the cleanup signal is preserved without breaking the multi-targeted build.
-    -->
-    <WarningsNotAsErrors>@(WarningsNotAsErrors);NU1510</WarningsNotAsErrors>
-
-    <!--
-    The following diagnostics are surfaced only on the net10.0 target because its BCL carries newer
-    obsoletions and nullable annotations than .NET Standard. They are pre-existing issues (not regressions
-    introduced by the .NET 10 multi-target) whose real remediation is deferred to Phase 1b cleanup. We keep
-    them as visible warnings (rather than NoWarn) so they remain on the Phase 1b backlog without breaking the
-    Phase 1 build:
+    The following diagnostics are surfaced on the net10.0 target because its BCL carries newer obsoletions
+    and nullable annotations than the .NET Standard targets we used to build against, and because we now
+    compile with C# 14 (LangVersion 14.0). They are pre-existing issues whose real remediation is tracked as
+    a dedicated follow-up (see contributordocs/net10-migration.md). We keep them as visible warnings (rather
+    than NoWarn) so they remain on the backlog without breaking the build:
       SYSLIB0004                         - obsolete Constrained Execution Region (CER) attributes in interop.
       SYSLIB0051                         - obsolete formatter-based serialization constructors on exceptions.
       SYSLIB0027/0045/0057/0060          - other obsolete BCL APIs newly flagged on net10 (legacy cryptography
@@ -65,8 +56,9 @@ on things like conditions in this file.
       CS8600/8601/8602/8603/8604         - nullable reference annotation differences in the net10 BCL.
       CS8621/8622/8714/8765/8767         - nullability mismatches on delegates, overrides and interface members.
       IDE0031                            - "null check can be simplified" style rule newly triggered on net10.
+      IDE0032                            - "use auto property" style rule newly triggered by C# 14 (field keyword).
     -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);SYSLIB0004;SYSLIB0027;SYSLIB0045;SYSLIB0051;SYSLIB0057;SYSLIB0060;CS8600;CS8601;CS8602;CS8603;CS8604;CS8621;CS8622;CS8714;CS8765;CS8767;IDE0031</WarningsNotAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);SYSLIB0004;SYSLIB0027;SYSLIB0045;SYSLIB0051;SYSLIB0057;SYSLIB0060;CS8600;CS8601;CS8602;CS8603;CS8604;CS8621;CS8622;CS8714;CS8765;CS8767;IDE0031;IDE0032</WarningsNotAsErrors>
 
     <NeutralLanguage>en-US</NeutralLanguage>
 

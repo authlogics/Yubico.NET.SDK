@@ -213,11 +213,7 @@ namespace Yubico.Core.Tlv
         /// </remarks>
         public override string ToString()
         {
-#if NETSTANDARD2_1_OR_GREATER
             return $"Tlv(0x{Tag:X}, {Length}, {BitConverter.ToString(Value.ToArray()).Replace("-", "", StringComparison.Ordinal)})";
-#else
-            return $"Tlv(0x{Tag:X}, {Length}, {BitConverter.ToString(Value.ToArray()).Replace("-", "")})";
-#endif
         }
 
         /// <summary>

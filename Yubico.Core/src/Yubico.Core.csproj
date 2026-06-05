@@ -18,8 +18,8 @@ limitations under the License. -->
     <AssemblyName>Yubico.Core</AssemblyName>
     <RootNamespace></RootNamespace>
 
-    <!-- Multi-target build -->
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net10.0</TargetFrameworks>
+    <!-- Single-target build -->
+    <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <!-- Suppressed warnings-->
@@ -130,26 +130,8 @@ limitations under the License. -->
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.10" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.10" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-    <!-- Before updating PolySharp, we should do some due dilligence on the update -->
-    <PackageReference Include="PolySharp" Version="1.15.0" AllowUpdates="false">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
-    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
     <!-- The wildcard version tag allows us to include the latest minor and pre-release versions -->
     <PackageReference Include="Yubico.NativeShims" Version="1.*-*" />
-  </ItemGroup>
-
-  <!--
-  These packages backfill BCL types (System.Memory's Span/Memory, Microsoft.Bcl.HashCode's HashCode)
-  that are missing on .NET Standard. They are in-box on net10.0, so they are only referenced for the
-  netstandard target frameworks. Phase 1b will remove them entirely when netstandard is dropped.
-  -->
-  <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard'))">
-    <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Expose internal test hooks to Unit Test projects">
@@ -172,5 +154,9 @@ limitations under the License. -->
 
   <ItemGroup>
     <EditorConfigFiles Remove="D:\Authlogics Source\Yubico.NET.SDK\Yubico.Core\src\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="System.Security.Cryptography\" />
   </ItemGroup>
 </Project>

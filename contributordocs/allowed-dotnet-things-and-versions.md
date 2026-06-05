@@ -26,75 +26,58 @@ What we think of as .NET is actually a collection of technologies. Thus, when we
    when integrating with the `dotnet` tool, as well as static analyzers.
 
 The specific versions discussed here apply to the SDK proper. Things like example code, demo apps, etc. can
-use different / newer implementations of .NET, so long as it supports .NET Standard 2.0.
+use different / newer implementations of .NET, so long as they run on .NET 10.
 
 ## Base Class Library (BCL)
 
 The BCL is the standard library for .NET. It is everything that you find under the `System.*` namespaces.
-**The .NET SDK project targets .NET Standard 2.0.** See the below sections for an explanation of what this
-means and why we chose this.
+**The .NET SDK project targets .NET 10.** See the below sections for an explanation of what this means and
+why we chose this.
 
 To see whether we can use a particular API, look toward the bottom of the page for the "Applies to" section.
 Note that if a method has multiple overloads, there will be multiple of these boxes. You may need to expand
 the drop down (the icon next to .NET 5.0 and other versions) to see the full table.
 
-If you see .NET Standard 2.0 listed on the table, you're good to go. If you don't, sorry, you can't use it.
-[Or can you](./polyfills.md)?
+If you see .NET 10 (or any version .NET 10 is built on) listed on the table, you're good to go.
 
 ![Microsoft Docs - Applies to which versions of .NET](./images/msft-docs-applies-to-version.png)
 
-### .NET Standard
+### History: why we used to target .NET Standard 2.0
 
-When the .NET team decided to embark on building a leaner/meaner cross-platform implementation of .NET, they
-decided to start small and then add to it. Additionally, there were other implementations of .NET in the wild,
-namely the open-source Mono project.
+This project originally targeted .NET Standard 2.0 so that a single build could be consumed by .NET Framework,
+.NET Core, Xamarin/Mono and Unity. That breadth came at a cost: many modern BCL APIs were unavailable, and the
+gaps had to be filled with [polyfills](./polyfills.md) and compatibility packages (`System.Memory`,
+`Microsoft.Bcl.HashCode`, `Microsoft.Bcl.AsyncInterfaces`, `PolySharp`, `Nullable`, and an in-tree
+`CryptographicOperations`).
 
-Something needed to be done to track the lowest common denominator of APIs so that the various projects could
-rally behind a certain set and claim support. This is the purpose of .NET Standard.
+This fork no longer needs that reach. It decoupled from upstream and targets a single, controlled runtime, so
+it moved to **.NET 10 only**. The compatibility packages and polyfills were removed as part of that move - see
+[`net10-migration.md`](./net10-migration.md) for the full history.
 
-.NET Standard is a spec - NOT an implementation of .NET. It is a specification that various .NET implementations
-can implement and then claim to support. This means if a particular .NET implementation claims support for
-.NET Standard 1.0 or 2.1, that a certain API is guaranteed to exist.
+### Why .NET 10?
 
-Lastly, .NET Standard versions are strict supersets of each other. That is, they are purely additive - anything
-that existed in version 1.0 will exist in 1.1, and 1.2, etc.
-
-You can find a table that maps .NET Standard versions to actual implementations
-[here](https://docs.microsoft.com/en-us/dotnet/standard/net-standard).
-
-### Why .NET Standard 2.0?
-
-The decision to target .NET Standard 2.0 was deliberate.
-
-It is the last .NET Standard that is supported by the "legacy" .NET Framework implementation. .NET Framework was
-the predecessor to .NET Core and is still widely used across the industry.
-
-Since we want to reach the widest audience possible, including those with existing code bases, support for .NET
-Framework is a must. This forces us to use .NET Standard 2.0. We should monitor the usage reports coming from
-Microsoft and others over the next few releases to determine when it would be appropriate to drop Framework support
-and move to a later standard.
+The target is dictated by the runtime this fork is deployed onto, which is .NET 10. Single-targeting a current
+.NET keeps the codebase simple (no multi-target conditionals, no polyfills), gives us the full modern BCL, and
+lets us use the latest language and analyzer features.
 
 ## C# language
 
 Discussing the C# language version is considerably less complex than the BCL.
 
-### We target C# language 8.0
+### We target C# language 14.0
 
 You can see various proposals and additions that were made to the C# language
 [here](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/). We support everything in the base
-specification up to and including the C# 8.0 specification proposal. Anything higher than that, we cannot yet
-support.
+specification up to and including the C# 14.0 specification, which is the language version that ships with the
+.NET 10 SDK.
 
-Moving to a newer language version isn't as straightforward as it might seem at first. Some language features
-actually depend on certain BCL types being present, or may work in tandem with a newer build system. Therefore,
-our language version is tied, in some sense, to our version of .NET Standard.
+Now that we single-target .NET 10, the language version is no longer constrained by .NET Standard, and we no
+longer need polyfills for the BCL types that newer language features depend on.
 
-There are some things we can do to skirt around BCL limitations by using polyfills and such, but it should not
-be taken for granted. It takes a decent amount of testing to verify that polyfills are working correctly.
+## Build system / SDK version - .NET 10.0.x
 
-## Build system / SDK version - .NET 5.0.x
-
-This project depends on analyzers only present in the .NET 5 SDK.
+This project depends on the .NET 10 SDK. The exact SDK version is pinned in [`global.json`](../global.json)
+(`rollForward: latestFeature`), and CI provisions the same SDK via `global-json-file`.
 
 In order to develop .NET libraries and applications, you need to install the .NET SDK. This is automatically
 done for you if you select the ".NET workload" inside of the Visual Studio installer. You can also download
