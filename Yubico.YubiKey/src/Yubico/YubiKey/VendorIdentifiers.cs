@@ -24,12 +24,17 @@ namespace Yubico.YubiKey
         public const short Onespan = 0x1A44;
         public const short Idemia = 0x225D;
 
+        // Intercede - used by the VirtualFido test authenticator so the SDK's integration
+        // tests can enumerate it as a FIDO device. Not an official USB-IF assignment.
+        public const short Intercede = 0x1CDE;
+
         public static IList<short> AllVendors => new List<short>()
         {
             Yubico,
             Swissbit,
             Onespan,
-            Idemia
+            Idemia,
+            Intercede
         };
     }
 }
