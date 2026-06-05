@@ -19,20 +19,21 @@ repository in a non-building state, the migration is split into two phases.
 
 ## Phase 1 - additive multi-target (DONE)
 
-Phase 1 adds `net10.0` alongside the existing `.NET Standard` targets so that nothing breaks for current
-consumers while net10 support is brought online.
+Phase 1 added `net10.0` alongside the existing `.NET Standard` targets so that nothing broke for current
+consumers while net10 support was brought online. (Phase 1b later dropped the `.NET Standard` targets - see
+below - so the descriptions here are historical.)
 
 - `global.json` SDK pinned to the .NET 10 SDK (`10.0.300`, `rollForward: latestFeature`).
-- The two production libraries multi-target `netstandard2.0;netstandard2.1;net10.0`:
+- The two production libraries multi-targeted `netstandard2.0;netstandard2.1;net10.0`:
 	- `Yubico.Core/src/Yubico.Core.csproj`
 	- `Yubico.YubiKey/src/Yubico.YubiKey.csproj`
-- Compatibility packages that are only needed on `.NET Standard` were scoped behind a
-  `Condition="$(TargetFramework.StartsWith('netstandard'))"` item group so they are not referenced on net10:
+- Compatibility packages that were only needed on `.NET Standard` were scoped behind a
+  `Condition="$(TargetFramework.StartsWith('netstandard'))"` item group so they were not referenced on net10:
 	- `Yubico.Core`: `System.Memory`, `Microsoft.Bcl.HashCode`
 	- `Yubico.YubiKey`: `Microsoft.Bcl.AsyncInterfaces`
-- The in-tree `CryptographicOperations` polyfill
-  (`Yubico.Core/src/System.Security.Cryptography/CryptographicOperations.cs`) is now guarded with
-  `#if NETSTANDARD2_0` (the class is only compiled for netstandard2.0) and forwards to the in-box type via
+- The in-tree `CryptographicOperations` polyfill (then at
+  `Yubico.Core/src/System.Security.Cryptography/CryptographicOperations.cs`) was guarded with
+  `#if NETSTANDARD2_0` (the class compiled only for netstandard2.0) and forwarded to the in-box type via
   `TypeForwardedTo` for every other target (netstandard2.1 and net10.0).
 - All test and sample projects were moved from `net8.0` to `net10.0`.
 - C# `LangVersion` was intentionally **left at `13.0`** in this phase.

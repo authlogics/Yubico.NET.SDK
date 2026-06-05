@@ -134,11 +134,6 @@ limitations under the License. -->
 
   </ItemGroup>
 
-  <!-- This is in order to use the HttpUtility.ParseQueryString in .net472 -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
-    <Reference Include="System.Web" />
-  </ItemGroup>
-
   <ItemGroup Label="Expose internal test hooks to Unit Test projects">
 
     <!-- Expose internal test hooks -->
