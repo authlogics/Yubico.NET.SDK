@@ -49,6 +49,15 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                 SdkPlatformInfo.IsElevated,
                 "FIDO HID access on Windows requires the test runner to be elevated (Run as Administrator).");
 
+            // Use FindHidDevices() rather than FindByTransport(Transport.HidFido): the latter goes
+            // through YubiKeyDeviceListener.Instance, which starts a background HID + smartcard
+            // listener that keeps re-enumerating (this Swissbit's CCID interface flaps
+            // PRESENT/UNPOWERED) and re-opens the device's FIDO interface mid-operation — a second
+            // CTAPHID channel that triggers CTAPHID_ERR_CHANNEL_BUSY during the touch-required
+            // MakeCredential. FindHidDevices() is a direct one-shot enumeration that never starts the
+            // listener (pattern borrowed from the windows-desktop-logon-agent). It still throws if the
+            // process is not elevated, which we have already gated above.
+            //
             // A freshly inserted device can report ready before its HID-FIDO interface
             // (usage page 0xF1D0) is enumerable, so retry for a few seconds before giving up.
             IYubiKeyDevice? device = null;
@@ -60,7 +69,7 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                     Thread.Sleep(500);
                 }
 
-                var devices = YubiKeyDevice.FindByTransport(Transport.HidFido).ToList();
+                var devices = YubiKeyDevice.FindHidDevices().ToList();
                 count = devices.Count;
                 device = devices.FirstOrDefault();
             }

@@ -29,7 +29,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 using Yubico.YubiKey.Cryptography;
-using Yubico.YubiKey.Fido2.Commands;
 using Yubico.YubiKey.Fido2.Cose;
 
 namespace Yubico.YubiKey.Fido2.Swissbit
@@ -48,11 +47,11 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                 $"No handoff file at {SwissbitHandoffStore.FilePath}. Run the Phase1 test first (device " +
                 "inserted), then remove and reinsert the device before running Phase2.");
 
-            Console.WriteLine(
-                $"[swissbit] Loaded {handoff!.Credentials.Count} credential record(s) from " +
+            Diag(
+                $"Loaded {handoff!.Credentials.Count} credential record(s) from " +
                 $"{SwissbitHandoffStore.FilePath} (created {handoff.CreatedUtc}).");
 
-            using Fido2Session session = OpenSession(PinUvAuthTokenPermissions.GetAssertion);
+            using Fido2Session session = OpenSession();
 
             int verified = 0;
             var failures = new List<string>();

@@ -16,7 +16,6 @@ using System;
 using System.IO;
 using System.Text;
 using Xunit;
-using Yubico.YubiKey.Fido2.Commands;
 
 namespace Yubico.YubiKey.Fido2.Swissbit
 {
@@ -103,10 +102,15 @@ namespace Yubico.YubiKey.Fido2.Swissbit
         protected IYubiKeyDevice Device => field ??= SwissbitFido2Device.GetDevice();
 
         /// <summary>
-        /// Opens a FIDO2 session on the device, setting the PIN if none is enrolled and verifying it
-        /// with the requested permissions bound to <see cref="Rp"/>.
+        /// Opens a FIDO2 session on the device and sets the PIN if none is enrolled. Deliberately does
+        /// NOT pre-verify the PIN or call credential management: MakeCredential/GetAssertions drive PIN
+        /// collection via the <see cref="SwissbitKeyCollector"/>, mirroring the windows-desktop-logon-agent's
+        /// proven flow. This keeps the CTAP-HID command sequence before the touch-required command
+        /// minimal — working theory: this beta key tolerates only a short command sequence per power
+        /// cycle, and extra traffic (cleanup enumerate, permission-scoped token) provokes
+        /// CTAPHID_ERR_CHANNEL_BUSY.
         /// </summary>
-        protected Fido2Session OpenSession(PinUvAuthTokenPermissions permissions)
+        protected Fido2Session OpenSession()
         {
             Fido2Session? session = null;
             try
@@ -116,6 +120,10 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                     KeyCollector = _keyCollector.HandleRequest
                 };
 
+                // Discovery uses FindHidDevices(), so the background listener never started; this is a
+                // safety net only.
+                QuiesceDeviceListener();
+
                 if (session.AuthenticatorInfo.ForcePinChange == true ||
                     session.AuthenticatorInfo.GetOptionValue(AuthenticatorOptions.clientPin) == OptionValue.False)
                 {
@@ -123,42 +131,34 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                     _ = session.TrySetPin(DevicePin);
                 }
 
-                // Preferred: a PIN/UV token scoped to exactly the permissions we need, bound to the RP.
-                try
-                {
-                    bool isValid = session.TryVerifyPin(DevicePin, permissions, Rp.Id, out _, out _);
-                    Assert.True(
-                        isValid,
-                        "PIN verification failed against the Swissbit device (wrong PIN). Set " +
-                        "SWISSBIT_FIDO2_PIN to the device's current PIN (the default is '11234567').");
-
-                    return session;
-                }
-                catch (Fido2Exception ex)
-                {
-                    // Some authenticators will not grant MakeCredential/GetAssertion permissions to a
-                    // ClientPIN-derived token (e.g. the 'noMcGaPermissionsWithClientPin' option), or
-                    // otherwise reject the permission-scoped token request. Fall back to the legacy
-                    // getPinToken flow, which yields a token usable for make-credential/get-assertion
-                    // on such devices. (CredentialManagement may then be unavailable; cleanup is
-                    // best-effort and tolerates that.)
-                    Diag($"permission-scoped PIN token rejected ({ex.GetType().Name}: {ex.Message}); " +
-                        "falling back to legacy getPinToken.");
-                    DumpDeviceInfo(session);
-
-                    bool isValid = session.TryVerifyPin(DevicePin, null, null, out _, out _);
-                    Assert.True(
-                        isValid,
-                        "PIN verification failed on the legacy getPinToken fallback (wrong PIN). Set " +
-                        "SWISSBIT_FIDO2_PIN to the device's current PIN.");
-
-                    return session;
-                }
+                return session;
             }
             catch
             {
                 session?.Dispose();
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Stops the background <see cref="YubiKeyDeviceListener"/> so it stops re-enumerating and
+        /// re-opening the device while a touch-required command is in flight. Best-effort.
+        /// </summary>
+        protected static void QuiesceDeviceListener()
+        {
+            try
+            {
+                // Discovery uses FindHidDevices() (see SwissbitFido2Device), so the listener should
+                // never have started. This is a safety net in case anything else started it.
+                if (YubiKeyDeviceListener.IsListenerRunning)
+                {
+                    YubiKeyDeviceListener.StopListening();
+                    Diag("Stopped background YubiKeyDeviceListener to avoid CTAPHID channel contention.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Diag($"Could not stop YubiKeyDeviceListener: {ex.GetType().Name}: {ex.Message}");
             }
         }
 

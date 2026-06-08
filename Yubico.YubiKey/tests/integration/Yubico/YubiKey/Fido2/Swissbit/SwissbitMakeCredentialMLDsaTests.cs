@@ -13,31 +13,36 @@
 // limitations under the License.
 
 // =====================================================================================
-// Swissbit iShield Key PQC — REAL HARDWARE, post-quantum (ML-DSA / FIPS 204) lifecycle.
+// Swissbit iShield Key 2 FIDO2 PQC — REAL HARDWARE, post-quantum (ML-DSA / FIPS 204).
 //
-// This is a TWO-PHASE suite because the beta Swissbit firmware must be physically removed
-// and reinserted between credential creation and assertion. State is handed off on disk
-// (see SwissbitHandoffStore), exactly as a relying party would persist a registration.
+// This beta key appears to tolerate only a MINIMAL CTAP-HID command sequence per power
+// cycle: extra traffic before a touch-required command (credential-management enumerate,
+// a permission-scoped getPinUvAuthToken, or multiple MakeCredentials in one session) was
+// seen to provoke CTAPHID_ERR_CHANNEL_BUSY. So:
+//   * Discovery uses YubiKeyDevice.FindHidDevices() (no background listener).
+//   * The session does NOT pre-verify the PIN or call credential management — MakeCredential
+//     drives PIN/touch itself (mirrors the windows-desktop-logon-agent).
+//   * Phase 1 creates exactly ONE credential per run. RE-INSERT the key before each run.
 //
-//   PHASE 1 (this file) — device INSERTED:
-//     dotnet test Yubico.YubiKey\tests\integration\Yubico.YubiKey.IntegrationTests.csproj `
-//         -c Debug --filter "FullyQualifiedName~Swissbit&FullyQualifiedName~Phase1"
+//   PHASE 1 — fresh-inserted key, creates one credential (variant/rk from env):
+//     setx-style:  $env:SWISSBIT_MLDSA_VARIANT="44"   # or 65 / 87  (default 44)
+//                  $env:SWISSBIT_RK="false"           # or true     (default false)
+//     dotnet test ...IntegrationTests.csproj -c Debug `
+//         --filter "FullyQualifiedName~Swissbit&FullyQualifiedName~Phase1_MakeCredentials"
 //
 //   >>> Then REMOVE the Swissbit and RE-INSERT it. <<<
 //
-//   PHASE 2 (SwissbitGetAssertionMLDsaTests) — device REINSERTED:
+//   PHASE 2 (SwissbitGetAssertionMLDsaTests) — reinserted key, asserts the persisted credential:
 //     dotnet test ... --filter "FullyQualifiedName~Swissbit&FullyQualifiedName~Phase2"
 //
-// Run from an ELEVATED shell (FIDO HID access requires Administrator on Windows). Touch the
-// device when it blinks. If the device has a PIN, set SWISSBIT_FIDO2_PIN to it first.
+// Run from an ELEVATED shell. Touch the device when it blinks. Set SWISSBIT_FIDO2_PIN to the
+// device PIN.
 // =====================================================================================
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Xunit;
 using Yubico.YubiKey.Cryptography;
-using Yubico.YubiKey.Fido2.Commands;
 using Yubico.YubiKey.Fido2.Cose;
 
 namespace Yubico.YubiKey.Fido2.Swissbit
@@ -45,13 +50,6 @@ namespace Yubico.YubiKey.Fido2.Swissbit
     [Trait("Category", "Elevated")]
     public class SwissbitMakeCredentialMLDsaTests : SwissbitFido2TestBase
     {
-        private static readonly CoseAlgorithmIdentifier[] AllMlDsa =
-        {
-            CoseAlgorithmIdentifier.MLDSA44,
-            CoseAlgorithmIdentifier.MLDSA65,
-            CoseAlgorithmIdentifier.MLDSA87,
-        };
-
         [SkippableFact]
         public void Phase1_GetInfo_AdvertisesMlDsa()
         {
@@ -92,26 +90,22 @@ namespace Yubico.YubiKey.Fido2.Swissbit
         {
             Skip.IfNot(MlDsaVerify.IsSupported, "ML-DSA is not supported on this platform (need .NET 10 with MLDsa).");
 
-            using Fido2Session session = OpenSession(
-                PinUvAuthTokenPermissions.MakeCredential
-                | PinUvAuthTokenPermissions.GetAssertion
-                | PinUvAuthTokenPermissions.CredentialManagement);
+            CoseAlgorithmIdentifier variant = SelectedVariant();
+            bool discoverable = SelectedRk();
+            Diag($"Single-credential run: variant={variant} discoverable={discoverable} " +
+                "(set SWISSBIT_MLDSA_VARIANT=44|65|87 and SWISSBIT_RK=true|false to change). " +
+                "RE-INSERT the key before each run.");
 
-            // Remove this suite's own leftover credentials from previous runs (scoped to our RP only,
-            // so we never delete the operator's real credentials for other relying parties).
-            TryCleanupOwnRp(session);
-
-            List<CoseAlgorithmIdentifier> variants = SelectMlDsaVariants(session);
-            Skip.If(variants.Count == 0, "Device advertises no ML-DSA variants; nothing to create.");
+            // Agent-style session: no PIN pre-verification, no credential-management calls. Exactly
+            // one MakeCredential follows, to keep the per-power-cycle command sequence minimal.
+            using Fido2Session session = OpenSession();
 
             var records = new List<SwissbitCredentialRecord>();
-            foreach (CoseAlgorithmIdentifier variant in variants)
-            {
-                TryCreate(session, variant, discoverable: false, records);
-                TryCreate(session, variant, discoverable: true, records);
-            }
+            TryCreate(session, variant, discoverable, records);
 
-            Skip.If(records.Count == 0, "No ML-DSA credentials could be created on this device. See swissbit-diag.log.");
+            Skip.If(
+                records.Count == 0,
+                $"Could not create the {variant} ML-DSA credential on this device. See swissbit-diag.log.");
 
             SwissbitHandoffStore.Save(new SwissbitHandoff
             {
@@ -206,62 +200,23 @@ namespace Yubico.YubiKey.Fido2.Swissbit
             }
             catch (Exception ex) when (ex is not Xunit.Sdk.XunitException)
             {
-                // The device may not support this variant, or non-resident ML-DSA, or it may be out
-                // of resident slots. Log and continue — a real assertion failure (XunitException)
-                // still propagates and fails the test.
+                // Log and continue — a real assertion failure (XunitException) still propagates and
+                // fails the test.
                 string status = ex is Fido2Exception fe && fe.Status is { } s ? $" [CtapStatus={s}]" : "";
                 Diag($"SKIP {label}: {ex.GetType().FullName}: {ex.Message}{status}");
             }
         }
 
-        private static List<CoseAlgorithmIdentifier> SelectMlDsaVariants(Fido2Session session)
-        {
-            IReadOnlyList<Tuple<string, CoseAlgorithmIdentifier>>? advertised =
-                session.AuthenticatorInfo.Algorithms;
-
-            if (advertised is not null)
+        private static CoseAlgorithmIdentifier SelectedVariant() =>
+            Environment.GetEnvironmentVariable("SWISSBIT_MLDSA_VARIANT") switch
             {
-                List<CoseAlgorithmIdentifier> fromInfo = advertised
-                    .Select(entry => entry.Item2)
-                    .Where(alg => AllMlDsa.Contains(alg))
-                    .Distinct()
-                    .ToList();
+                "65" => CoseAlgorithmIdentifier.MLDSA65,
+                "87" => CoseAlgorithmIdentifier.MLDSA87,
+                _ => CoseAlgorithmIdentifier.MLDSA44, // default: smallest response (least CTAP-HID stress)
+            };
 
-                if (fromInfo.Count > 0)
-                {
-                    Diag($"ML-DSA variants advertised: {string.Join(", ", fromInfo)}");
-                    return fromInfo;
-                }
-            }
-
-            // The device did not advertise an algorithms list (or none were ML-DSA). Try all three;
-            // unsupported ones are skipped at MakeCredential time.
-            Diag("No ML-DSA variants advertised; trying all three (best effort).");
-            return AllMlDsa.ToList();
-        }
-
-        private static void TryCleanupOwnRp(Fido2Session session)
-        {
-            try
-            {
-                foreach (RelyingParty rp in session.EnumerateRelyingParties())
-                {
-                    if (!string.Equals(rp.Id, Rp.Id, StringComparison.Ordinal))
-                    {
-                        continue;
-                    }
-
-                    foreach (var cred in session.EnumerateCredentialsForRelyingParty(rp))
-                    {
-                        session.DeleteCredential(cred.CredentialId);
-                        Diag("cleanup: deleted a prior credential for this suite's RP.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Diag($"cleanup skipped: {ex.GetType().Name}: {ex.Message}");
-            }
-        }
+        private static bool SelectedRk() =>
+            string.Equals(
+                Environment.GetEnvironmentVariable("SWISSBIT_RK"), "true", StringComparison.OrdinalIgnoreCase);
     }
 }
