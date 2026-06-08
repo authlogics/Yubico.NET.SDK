@@ -51,6 +51,8 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                 $"Loaded {handoff!.Credentials.Count} credential record(s) from " +
                 $"{SwissbitHandoffStore.FilePath} (created {handoff.CreatedUtc}).");
 
+            RemindFreshInsert("this assertion (Phase 2)");
+
             using Fido2Session session = OpenSession();
 
             int verified = 0;
@@ -62,17 +64,19 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                 {
                     VerifyOne(session, record);
                     verified++;
-                    Console.WriteLine($"[swissbit] OK: {record.Label} assertion verified after reinsertion.");
+                    Diag($"OK: {record.Label} assertion verified after reinsertion.");
                 }
                 catch (Exception ex)
                 {
                     string message = $"{record.Label}: {ex.GetType().Name}: {ex.Message}";
                     failures.Add(message);
-                    Console.WriteLine($"[swissbit] FAIL {message}");
+                    Diag($"FAIL {message}");
+                    Diag("   HINT: CHANNEL_BUSY / 'command failed to complete' usually means the key " +
+                        "was not freshly inserted for this assertion. Remove, re-insert, run Phase2 again.");
                 }
             }
 
-            Console.WriteLine($"[swissbit] Verified {verified}/{handoff.Credentials.Count} ML-DSA assertion(s).");
+            Diag($"Verified {verified}/{handoff.Credentials.Count} ML-DSA assertion(s).");
 
             Assert.True(
                 failures.Count == 0,
@@ -106,7 +110,7 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                 });
             }
 
-            Console.WriteLine($"[swissbit] Asserting {record.Label} — touch the device when it blinks.");
+            Diag($"Asserting {record.Label} — touch the device when it blinks.");
             IReadOnlyList<GetAssertionData> assertions = session.GetAssertions(gaParams);
 
             GetAssertionData? match = assertions

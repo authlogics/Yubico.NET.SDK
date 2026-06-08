@@ -169,3 +169,26 @@ Integration tests use standardized YubiKey devices enumerated in `StandardTestDe
 - Internal visibility configured for test assemblies
 - FIPS-compliant cryptographic implementations available
 - Extensive integration test coverage requiring physical devices
+
+## Swissbit iShield Key 2 FIDO2 PQC — real-hardware ML-DSA tests
+
+Tests under `Yubico.YubiKey/tests/integration/Yubico/YubiKey/Fido2/Swissbit/` drive a **physical
+Swissbit post-quantum (ML-DSA / FIPS 204) key**. This is a **non-certified beta** that tolerates only
+a *minimal* CTAP-HID command sequence per power cycle. Read `Swissbit/README.md` before touching these
+tests. Key rules (do not "simplify" them away):
+
+- **REMOVE and RE-INSERT the key before EVERY run** — each Phase 1 `MakeCredential` *and* each Phase 2
+  assertion. Two touch-required operations on a single insertion provoke `CTAPHID_ERR_CHANNEL_BUSY`.
+- Each Phase 1 run creates **exactly one** credential; select it with env vars
+  `SWISSBIT_MLDSA_VARIANT` (`44`|`65`|`87`) and `SWISSBIT_RK` (`true`|`false`). State is handed off to
+  Phase 2 via a JSON file (`SWISSBIT_PQC_HANDOFF`, default OS temp).
+- Set `SWISSBIT_FIDO2_PIN` to the device PIN; run from an **elevated** shell (FIDO HID needs admin).
+- Discovery uses `YubiKeyDevice.FindHidDevices()` (a one-shot enumeration), **not**
+  `FindByTransport`/`YubiKeyDeviceListener` — the listener's background re-enumeration opens a second
+  CTAPHID channel on this flapping dual-interface device and causes `CHANNEL_BUSY`. Keep it this way.
+- The session is intentionally agent-style: **no PIN pre-verification, no credential-management
+  calls** — `MakeCredential`/`GetAssertions` drive PIN/touch (mirrors `windows-desktop-logon-agent`).
+- All of the above is **test-harness only**; no SDK production source was changed to support this key.
+  The one related SDK fix (`AuthenticatorInfo` reading `vendorPrototypeConfigCommands` as unsigned) is
+  a genuine CTAP 2.1 conformance fix, not a device workaround.
+- The tests **skip cleanly** when no device is present, so they are safe to leave in CI.

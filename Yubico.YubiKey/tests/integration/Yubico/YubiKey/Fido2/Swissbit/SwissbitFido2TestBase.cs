@@ -85,6 +85,20 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                 Path.GetDirectoryName(SwissbitHandoffStore.FilePath) ?? Path.GetTempPath(),
                 "swissbit-diag.log");
 
+        /// <summary>
+        /// Prints a prominent reminder that this beta key must be freshly inserted before the named
+        /// touch-required operation. Running two such operations on one insertion provokes
+        /// CTAPHID_ERR_CHANNEL_BUSY.
+        /// </summary>
+        protected static void RemindFreshInsert(string operation)
+        {
+            Diag("==================================================================");
+            Diag($"REMINDER: REMOVE + RE-INSERT the Swissbit key before {operation}.");
+            Diag("This beta key accepts only ONE touch-required command per power cycle;");
+            Diag("if it was not just reinserted, expect CTAPHID_ERR_CHANNEL_BUSY.");
+            Diag("==================================================================");
+        }
+
         /// <summary>Logs a diagnostic line to both the console and the diagnostics file.</summary>
         protected static void Diag(string message)
         {

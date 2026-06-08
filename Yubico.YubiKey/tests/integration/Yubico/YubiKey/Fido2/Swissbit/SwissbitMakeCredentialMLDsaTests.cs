@@ -92,9 +92,9 @@ namespace Yubico.YubiKey.Fido2.Swissbit
 
             CoseAlgorithmIdentifier variant = SelectedVariant();
             bool discoverable = SelectedRk();
+            RemindFreshInsert("this MakeCredential");
             Diag($"Single-credential run: variant={variant} discoverable={discoverable} " +
-                "(set SWISSBIT_MLDSA_VARIANT=44|65|87 and SWISSBIT_RK=true|false to change). " +
-                "RE-INSERT the key before each run.");
+                "(set SWISSBIT_MLDSA_VARIANT=44|65|87 and SWISSBIT_RK=true|false to change).");
 
             // Agent-style session: no PIN pre-verification, no credential-management calls. Exactly
             // one MakeCredential follows, to keep the per-power-cycle command sequence minimal.
@@ -204,6 +204,9 @@ namespace Yubico.YubiKey.Fido2.Swissbit
                 // fails the test.
                 string status = ex is Fido2Exception fe && fe.Status is { } s ? $" [CtapStatus={s}]" : "";
                 Diag($"SKIP {label}: {ex.GetType().FullName}: {ex.Message}{status}");
+                Diag("   HINT: 'command failed to complete' / CHANNEL_BUSY on this beta key almost " +
+                    "always means it was not freshly inserted for this single operation. Remove the " +
+                    "key, re-insert it, and run again (one credential per power cycle).");
             }
         }
 
