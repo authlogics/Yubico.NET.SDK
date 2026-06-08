@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 using Yubico.YubiKey.Fido2.Cbor;
@@ -148,6 +149,31 @@ namespace Yubico.YubiKey.Fido2.Cose
                 .Encode();
 
             _ = Assert.Throws<ArgumentException>(() => CoseMlDsaPublicKey.CreateFromEncodedKey(encoded));
+        }
+
+        [Fact]
+        public void CreateFromEncodedKey_NonMlDsaAlgorithm_ThrowsNotSupported()
+        {
+            // kty = AKP but alg = ES256 (not an ML-DSA algorithm).
+            byte[] encoded = new CborMapWriter<int>()
+                .Entry(1, (int)CoseKeyType.Akp)
+                .Entry(3, (int)CoseAlgorithmIdentifier.ES256)
+                .Entry(-1, (ReadOnlyMemory<byte>)DummyKey(1312))
+                .Encode();
+
+            _ = Assert.Throws<NotSupportedException>(() => CoseMlDsaPublicKey.CreateFromEncodedKey(encoded));
+        }
+
+        [Fact]
+        public void CreateFromEncodedKey_MissingPublicKey_ThrowsKeyNotFound()
+        {
+            // AKP map declaring ML-DSA-65 but with no public key (label -1).
+            byte[] encoded = new CborMapWriter<int>()
+                .Entry(1, (int)CoseKeyType.Akp)
+                .Entry(3, (int)CoseAlgorithmIdentifier.MLDSA65)
+                .Encode();
+
+            _ = Assert.Throws<KeyNotFoundException>(() => CoseMlDsaPublicKey.CreateFromEncodedKey(encoded));
         }
     }
 }

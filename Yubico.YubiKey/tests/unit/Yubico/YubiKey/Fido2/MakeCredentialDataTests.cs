@@ -153,5 +153,17 @@ namespace Yubico.YubiKey.Fido2
 
             Assert.False(mcData.VerifyAttestation(tamperedHash));
         }
+
+        [Fact]
+        public void Constructor_NonEcNonAkpCredentialKey_ThrowsCtap2DataException()
+        {
+            // An EdDSA (OKP) credential public key is neither EC2 nor AKP, so the credential-type
+            // gate must still reject it (regression: the relaxation only added AKP, not OKP).
+            byte[] edDsaKey = CoseEdDsaPublicKey.CreateFromPublicKeyData(new byte[32]).Encode();
+            byte[] authData = BuildAttestedAuthData(edDsaKey, new byte[16]);
+            byte[] encoded = BuildPackedSelfAttestation(authData, CoseAlgorithmIdentifier.EdDSA, new byte[64]);
+
+            _ = Assert.Throws<Ctap2DataException>(() => new MakeCredentialData(encoded));
+        }
     }
 }
