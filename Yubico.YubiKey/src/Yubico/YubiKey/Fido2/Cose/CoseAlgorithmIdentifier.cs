@@ -61,5 +61,23 @@ namespace Yubico.YubiKey.Fido2.Cose
         /// Currently, not supported by any YubiKey
         /// </summary>
         RS256 = -257,
+
+        /// <summary>
+        /// ML-DSA-44 (FIPS 204, NIST security level 2). A post-quantum signature
+        /// algorithm. Uses the COSE key type AKP.
+        /// </summary>
+        MLDSA44 = -48,
+
+        /// <summary>
+        /// ML-DSA-65 (FIPS 204, NIST security level 3). A post-quantum signature
+        /// algorithm. Uses the COSE key type AKP.
+        /// </summary>
+        MLDSA65 = -49,
+
+        /// <summary>
+        /// ML-DSA-87 (FIPS 204, NIST security level 5). A post-quantum signature
+        /// algorithm. Uses the COSE key type AKP.
+        /// </summary>
+        MLDSA87 = -50,
     }
 }

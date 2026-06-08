@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
+using System.Formats.Cbor;
 using Xunit;
 using Yubico.YubiKey.Fido2.Cose;
 
@@ -19,6 +21,107 @@ namespace Yubico.YubiKey.Fido2
 {
     public class GetAssertionDataTests
     {
+        public static TheoryData<CoseAlgorithmIdentifier> MlDsaVariants => new()
+        {
+            CoseAlgorithmIdentifier.MLDSA44,
+            CoseAlgorithmIdentifier.MLDSA65,
+            CoseAlgorithmIdentifier.MLDSA87,
+        };
+
+        private static readonly byte[] TestClientDataHash = new byte[] {
+            0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
+            0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38
+        };
+
+        // Minimal assertion authenticator data: rpIdHash(32) || flags(UP) || signCount(4).
+        // No attested-credential-data (AT) and no extensions (ED).
+        private static byte[] BuildAssertionAuthData()
+        {
+            byte[] authData = new byte[37];
+            for (int i = 0; i < 32; i++)
+            {
+                authData[i] = (byte)i;
+            }
+
+            authData[32] = 0x01; // UP flag
+            authData[36] = 0x05; // signCount = 5 (big-endian)
+            return authData;
+        }
+
+        private static byte[] Concat(byte[] first, byte[] second)
+        {
+            byte[] result = new byte[first.Length + second.Length];
+            Buffer.BlockCopy(first, 0, result, 0, first.Length);
+            Buffer.BlockCopy(second, 0, result, first.Length, second.Length);
+            return result;
+        }
+
+        // { 1: { "id": credId, "type": "public-key" }, 2: authData, 3: signature }
+        private static byte[] BuildGetAssertionEncoding(byte[] authData, byte[] signature, byte[] credId)
+        {
+            var writer = new CborWriter(CborConformanceMode.Ctap2Canonical);
+            writer.WriteStartMap(3);
+
+            writer.WriteInt32(1);
+            writer.WriteStartMap(2);
+            writer.WriteTextString("id");
+            writer.WriteByteString(credId);
+            writer.WriteTextString("type");
+            writer.WriteTextString("public-key");
+            writer.WriteEndMap();
+
+            writer.WriteInt32(2);
+            writer.WriteByteString(authData);
+
+            writer.WriteInt32(3);
+            writer.WriteByteString(signature);
+
+            writer.WriteEndMap();
+            return writer.Encode();
+        }
+
+        [Theory]
+        [MemberData(nameof(MlDsaVariants))]
+        public void VerifyAssertion_MlDsa_Succeeds(CoseAlgorithmIdentifier algorithm)
+        {
+            if (!MlDsaTestKey.IsSupported)
+            {
+                return;
+            }
+
+            using var key = MlDsaTestKey.Generate(algorithm);
+            byte[] authData = BuildAssertionAuthData();
+            byte[] signature = key.Sign(Concat(authData, TestClientDataHash));
+            byte[] credId = new byte[] { 0x11, 0x22, 0x33, 0x44 };
+            byte[] encoded = BuildGetAssertionEncoding(authData, signature, credId);
+
+            using var aData = new GetAssertionData(encoded);
+
+            Assert.True(aData.VerifyAssertion(key.CreateCosePublicKey(), TestClientDataHash));
+        }
+
+        [Theory]
+        [MemberData(nameof(MlDsaVariants))]
+        public void VerifyAssertion_MlDsa_TamperedClientDataHash_ReturnsFalse(CoseAlgorithmIdentifier algorithm)
+        {
+            if (!MlDsaTestKey.IsSupported)
+            {
+                return;
+            }
+
+            using var key = MlDsaTestKey.Generate(algorithm);
+            byte[] authData = BuildAssertionAuthData();
+            byte[] signature = key.Sign(Concat(authData, TestClientDataHash));
+            byte[] encoded = BuildGetAssertionEncoding(authData, signature, new byte[] { 0x11, 0x22, 0x33, 0x44 });
+
+            byte[] tamperedHash = (byte[])TestClientDataHash.Clone();
+            tamperedHash[0] ^= 0xFF;
+
+            using var aData = new GetAssertionData(encoded);
+
+            Assert.False(aData.VerifyAssertion(key.CreateCosePublicKey(), tamperedHash));
+        }
+
         [Fact]
         public void Verify_Succeeds()
         {

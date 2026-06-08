@@ -116,6 +116,9 @@ namespace Yubico.YubiKey.Fido2.Cose
                 CoseAlgorithmIdentifier.ES384 => CoseEcPublicKey.CreateFromEncodedKey(coseEncodedKey),
                 CoseAlgorithmIdentifier.ES512 => CoseEcPublicKey.CreateFromEncodedKey(coseEncodedKey),
                 CoseAlgorithmIdentifier.EdDSA => CoseEdDsaPublicKey.CreateFromEncodedKey(coseEncodedKey),
+                CoseAlgorithmIdentifier.MLDSA44 => CoseMlDsaPublicKey.CreateFromEncodedKey(coseEncodedKey),
+                CoseAlgorithmIdentifier.MLDSA65 => CoseMlDsaPublicKey.CreateFromEncodedKey(coseEncodedKey),
+                CoseAlgorithmIdentifier.MLDSA87 => CoseMlDsaPublicKey.CreateFromEncodedKey(coseEncodedKey),
                 _ => throw new NotSupportedException(
                     string.Format(CultureInfo.CurrentCulture, ExceptionMessages.UnsupportedAlgorithm))
             };

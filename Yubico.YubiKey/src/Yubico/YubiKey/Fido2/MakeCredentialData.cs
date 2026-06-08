@@ -187,8 +187,15 @@ namespace Yubico.YubiKey.Fido2
             {
                 Format = map.ReadTextString(KeyFormat);
                 AuthenticatorData = new AuthenticatorData(map.ReadByteString(KeyAuthData));
-                if (AuthenticatorData.CredentialPublicKey is not CoseEcPublicKey
-                    || AuthenticatorData.CredentialPublicKey.Type != CoseKeyType.Ec2
+
+                // The credential public key is either an elliptic-curve key (classical algorithms)
+                // or an ML-DSA key (post-quantum). Both are supported; anything else is unknown.
+                bool isEc = AuthenticatorData.CredentialPublicKey is CoseEcPublicKey
+                    && AuthenticatorData.CredentialPublicKey.Type == CoseKeyType.Ec2;
+                bool isMlDsa = AuthenticatorData.CredentialPublicKey is CoseMlDsaPublicKey
+                    && AuthenticatorData.CredentialPublicKey.Type == CoseKeyType.Akp;
+
+                if ((!isEc && !isMlDsa)
                     || !map.Contains(KeyAttestationStatement)
                     || !ReadAttestation(map))
                 {
@@ -222,7 +229,8 @@ namespace Yubico.YubiKey.Fido2
         //    "sig"/byte array
         //       and possibly
         //    "x5c"/array of certs.
-        // The byte array is the DER encoding of the ECDSA signature.
+        // For ECDSA the signature byte array is the DER encoding; for ML-DSA it is the raw FIPS 204
+        // signature. A self-attestation statement has only "alg" and "sig" (no "x5c").
         // If everything works, return true. Otherwise, return false.
         private bool ReadAttestation(CborMap<int> map)
         {
@@ -256,15 +264,22 @@ namespace Yubico.YubiKey.Fido2
         }
 
         /// <summary>
-        /// Use the zero'th public key in the
-        /// <see cref="AttestationCertificates"/> list to verify the
-        /// <c>AuthenticatorData</c> and client data hash using the signature
-        /// that is the <see cref="AttestationStatement"/>.
+        /// Verify the <see cref="AttestationStatement"/> (the signature) over the
+        /// <c>AuthenticatorData</c> and client data hash.
         /// </summary>
         /// <remarks>
-        /// If the signature verifies, this method will return <c>true</c>, and
-        /// if it does not verify, it will return <c>false</c>. If there are no
-        /// certificates in the list, this method will throw an exception.
+        /// <para>
+        /// If the attestation statement includes a certificate chain
+        /// (<see cref="AttestationCertificates"/>), the signature is verified with the public key in
+        /// the zero'th (leaf) certificate. If there is no certificate chain (self-attestation), the
+        /// signature is verified with the credential's own public key
+        /// (<see cref="AuthenticatorData.CredentialPublicKey"/>); this is the form used by ML-DSA
+        /// credentials.
+        /// </para>
+        /// <para>
+        /// If the signature verifies, this method returns <c>true</c>; if it does not verify, it
+        /// returns <c>false</c>.
+        /// </para>
         /// </remarks>
         /// <param name="clientDataHash">
         /// The client data hash sent to the YubiKey to make the credential.
@@ -274,25 +289,41 @@ namespace Yubico.YubiKey.Fido2
         /// verifies, <c>false</c> otherwise.
         /// </returns>
         /// <exception cref="InvalidOperationException">
-        /// There is no cert in the attestation certificate list.
+        /// There is neither an attestation certificate nor a credential public key to verify with.
         /// </exception>
         public bool VerifyAttestation(ReadOnlyMemory<byte> clientDataHash)
         {
+            // The signed data is the concatenation authenticatorData || clientDataHash.
+            byte[] encodedAuthData = AuthenticatorData.EncodedAuthenticatorData.ToArray();
+            byte[] message = new byte[encodedAuthData.Length + clientDataHash.Length];
+            Buffer.BlockCopy(encodedAuthData, 0, message, 0, encodedAuthData.Length);
+            clientDataHash.Span.CopyTo(message.AsSpan(encodedAuthData.Length));
+
+            // Self-attestation (no x5c): the attestation signature is made with the credential's own
+            // private key, so verify it with the credential public key.
             if (AttestationCertificates is null || AttestationCertificates.Count == 0)
             {
-                throw new InvalidOperationException(ExceptionMessages.MissingCtap2Data);
+                CoseKey credentialPublicKey = AuthenticatorData.CredentialPublicKey
+                    ?? throw new InvalidOperationException(ExceptionMessages.MissingCtap2Data);
+
+                // ML-DSA verifies the message directly in "pure" mode (no pre-hash).
+                if (CoseKeyHelpers.IsMlDsaAlgorithm(AttestationAlgorithm))
+                {
+                    using var mlDsaVfy = new MlDsaVerify(credentialPublicKey);
+                    return mlDsaVfy.VerifyData(message, AttestationStatement.ToArray());
+                }
+
+                using var selfDigester = CryptographyProviders.Sha256Creator();
+                using var ecdsaSelfVfy = new EcdsaVerify(credentialPublicKey);
+                return ecdsaSelfVfy.VerifyDigestedData(
+                    selfDigester.ComputeHash(message), AttestationStatement.ToArray());
             }
 
+            // Full attestation: verify with the public key in the leaf attestation certificate.
             using var digester = CryptographyProviders.Sha256Creator();
-            _ = digester.TransformBlock(
-                AuthenticatorData.EncodedAuthenticatorData.ToArray(), 0,
-                AuthenticatorData.EncodedAuthenticatorData.Length, null, 0);
-            _ = digester.TransformFinalBlock(clientDataHash.ToArray(), 0, clientDataHash.Length);
-
             using var ecdsaVfy = new EcdsaVerify(AttestationCertificates[0]);
             return ecdsaVfy.VerifyDigestedData(
-                digester.Hash ?? throw new InvalidOperationException(ExceptionMessages.CryptographyProviderFailure),
-                AttestationStatement.ToArray());
+                digester.ComputeHash(message), AttestationStatement.ToArray());
         }
     }
 }

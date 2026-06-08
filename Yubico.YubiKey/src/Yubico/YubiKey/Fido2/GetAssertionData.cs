@@ -201,17 +201,29 @@ namespace Yubico.YubiKey.Fido2
         /// </returns>
         public bool VerifyAssertion(CoseKey publicKey, ReadOnlyMemory<byte> clientDataHash)
         {
-            using var digesterHashAlgorithm = CryptographyProviders.Sha256Creator();
-            _ = digesterHashAlgorithm.TransformBlock(
-                AuthenticatorData.EncodedAuthenticatorData.ToArray(), 0,
-                AuthenticatorData.EncodedAuthenticatorData.Length, null, 0);
+            if (publicKey is null)
+            {
+                throw new ArgumentNullException(nameof(publicKey));
+            }
 
-            _ = digesterHashAlgorithm.TransformFinalBlock(clientDataHash.ToArray(), 0, clientDataHash.Length);
+            // The signed message is the concatenation authenticatorData || clientDataHash.
+            byte[] encodedAuthData = AuthenticatorData.EncodedAuthenticatorData.ToArray();
+            byte[] message = new byte[encodedAuthData.Length + clientDataHash.Length];
+            Buffer.BlockCopy(encodedAuthData, 0, message, 0, encodedAuthData.Length);
+            clientDataHash.Span.CopyTo(message.AsSpan(encodedAuthData.Length));
 
+            // ML-DSA signs the message directly in "pure" mode (no pre-hash).
+            if (CoseKeyHelpers.IsMlDsaAlgorithm(publicKey.Algorithm))
+            {
+                using var mlDsaVfy = new MlDsaVerify(publicKey);
+                return mlDsaVfy.VerifyData(message, Signature.ToArray());
+            }
+
+            // ECDSA verifies a SHA-256 digest of the message.
+            using var digester = CryptographyProviders.Sha256Creator();
+            byte[] digest = digester.ComputeHash(message);
             using var ecdsaVfy = new EcdsaVerify(publicKey);
-            return ecdsaVfy.VerifyDigestedData(
-                digesterHashAlgorithm.Hash ?? throw new InvalidOperationException(ExceptionMessages.CryptographyProviderFailure),
-                Signature.ToArray());
+            return ecdsaVfy.VerifyDigestedData(digest, Signature.ToArray());
         }
 
         /// <summary>

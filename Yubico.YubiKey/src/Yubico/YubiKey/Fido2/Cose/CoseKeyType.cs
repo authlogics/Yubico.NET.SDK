@@ -44,5 +44,12 @@ namespace Yubico.YubiKey.Fido2.Cose
         /// Symmetric keys
         /// </summary>
         Symmetric = 4,
+
+        /// <summary>
+        /// Algorithm Key Pair. Used by post-quantum algorithms such as ML-DSA
+        /// (FIPS 204), where the algorithm identifier fully determines the
+        /// parameter set.
+        /// </summary>
+        Akp = 7,
     }
 }

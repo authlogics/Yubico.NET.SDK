@@ -195,10 +195,12 @@ namespace Yubico.YubiKey.Fido2
         /// <remarks>
         /// Each entry in the list is a type and algorithm. Neither the type nor
         /// algorithm are guaranteed to be unique, although each combination is.
-        /// Currently, the only type defined is "public-key". The only algorithm
-        /// the YubiKey supports is ECDSA with SHA-256 using the NIST P-256
-        /// curve. This is the pair
-        /// "public-key"/<c>CoseAlgorithmIdentifier.ES256</c>.
+        /// Currently, the only type defined is "public-key". The algorithm is one
+        /// the authenticator reports, for example ECDSA with SHA-256 using the
+        /// NIST P-256 curve (the pair
+        /// "public-key"/<c>CoseAlgorithmIdentifier.ES256</c>), or, on authenticators
+        /// that support it, an ML-DSA parameter set
+        /// (<c>MLDSA44</c>/<c>MLDSA65</c>/<c>MLDSA87</c>).
         /// </remarks>
         public IReadOnlyList<Tuple<string, CoseAlgorithmIdentifier>>? Algorithms { get; }
 
