@@ -523,15 +523,18 @@ namespace Yubico.YubiKey.Fido2
                 var int64List = new List<long>(intList.Count);
                 for (int index = 0; index < intList.Count; index++)
                 {
-                    object? currentValue = CborMap<int>.ConvertValue<long>(intList[index]);
-                    if (currentValue is long currentValue64)
+                    // vendorPrototypeConfigCommands are *unsigned* vendor command ids (CTAP 2.1).
+                    // The CBOR decoder boxes unsigned integers as ulong, and some authenticators
+                    // (e.g. the Swissbit iShield Key 2 PQC) send ids larger than long.MaxValue.
+                    // Reading those as a signed long overflows and would abort the entire getInfo
+                    // parse, breaking every FIDO2 operation on the device. Preserve the bit pattern
+                    // via an unchecked cast so the value round-trips instead of throwing.
+                    int64List.Add(intList[index] switch
                     {
-                        int64List.Add(currentValue64);
-                    }
-                    else
-                    {
-                        int64List.Add(0);
-                    }
+                        ulong unsignedValue => unchecked((long)unsignedValue),
+                        long signedValue => signedValue,
+                        _ => 0
+                    });
                 }
 
                 return int64List;
